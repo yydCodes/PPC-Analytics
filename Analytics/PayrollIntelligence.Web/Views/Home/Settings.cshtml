@@ -1,0 +1,198 @@
+@using PayrollIntelligence.Core
+@{
+    ViewData["Title"] = "API Settings";
+
+    string FormatJsonResponse(string? response)
+    {
+        if (string.IsNullOrEmpty(response))
+        {
+            return "(no response)";
+        }
+
+        try
+        {
+            // Try to parse as JSON and format it
+            var jsonDoc = System.Text.Json.JsonDocument.Parse(response);
+            using var stream = new System.IO.MemoryStream();
+            using var writer = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions { Indented = true });
+            jsonDoc.WriteTo(writer);
+            stream.Position = 0;
+            using var reader = new System.IO.StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch
+        {
+            // If not valid JSON, return as-is
+            return response;
+        }
+    }
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">API Settings</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="fas fa-cog"></i> API Configuration Settings</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Success/Error Messages -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <!-- Authentication Status -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-@(ViewBag.IsAuthenticated ? "success" : "warning")">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            @if (ViewBag.IsAuthenticated)
+                                            {
+                                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Authentication Status</h6>
+                                            <p class="mb-0">
+                                                @if (ViewBag.IsAuthenticated)
+                                                {
+                                                    <span class="badge bg-success">Authenticated</span>
+                                                    <small class="text-muted">Bearer token is valid and ready for API calls</small>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning">Not Authenticated</span>
+                                                    <small class="text-muted">Configure credentials below to enable API access</small>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Configuration Form -->
+                    <form method="post" class="row g-3">
+                        <div class="col-12">
+                            <h5>API Credentials</h5>
+                            <p class="text-muted">Configure your client credentials to access the payroll API at <code>@(ViewBag.ApiConfig.BaseUrl)</code></p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="clientId" class="form-label">
+                                Client ID <span class="text-danger">*</span>
+                            </label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="clientId"
+                                   name="clientId"
+                                   value="@ViewBag.ClientId"
+                                   placeholder="Enter your Client ID"
+                                   required>
+                            <div class="form-text">Your OAuth2 client identifier</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="clientSecret" class="form-label">
+                                Client Secret <span class="text-danger">*</span>
+                            </label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="clientSecret"
+                                   name="clientSecret"
+                                   value="@ViewBag.ClientSecret"
+                                   placeholder="Enter your Client Secret"
+                                   required>
+                            <div class="form-text">Your OAuth2 client secret (kept secure)</div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> How It Works</h6>
+                                <ul class="mb-0">
+                                    <li>The system will authenticate with <code>@(ViewBag.ApiConfig.BaseUrl)/connect/token</code> using OAuth2 client credentials flow</li>
+                                    <li>Upon successful authentication, a bearer token is obtained for subsequent API calls</li>
+                                    <li>Payroll data will be fetched from <code>@(ViewBag.ApiConfig.BaseUrl)/Payrolls/GetPayroll/:year/:month</code></li>
+                                    <li>If authentication fails, the system falls back to using local JSON files</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save & Test Credentials
+                            </button>
+                            <a href="/" class="btn btn-secondary ms-2">
+                                <i class="fas fa-arrow-left"></i> Back to Home
+                            </a>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(ViewBag.AuthResponse as string))
+                        {
+                            <div class="col-12 mt-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0"><i class="fas fa-server"></i> API Response</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <pre class="mb-0 bg-light p-3 rounded"><code>@FormatJsonResponse(ViewBag.AuthResponse)</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </form>
+
+
+                    <!-- API Information -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6><i class="fas fa-code"></i> API Endpoints</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Authentication:</strong><br>
+                                            <code>POST @(ViewBag.ApiConfig.BaseUrl)/connect/token</code>
+                                            <br><small class="text-muted">OAuth2 client credentials flow</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Payroll Data:</strong><br>
+                                            <code>GET @(ViewBag.ApiConfig.BaseUrl)/Payrolls/GetPayroll/:year/:month</code>
+                                            <br><small class="text-muted">Fetch payroll data for specific period</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

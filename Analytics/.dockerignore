@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vs
+.vscode
+.idea
+*.user
+*.suo
+*.DotSettings.user
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# Test data (if sensitive)
+# test-data/
+
+# Documentation (not needed in image)
+*.md
+!README.md
+
+# Docker files (not needed in image)
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Logs
+*.log
+logs/
+
+# Local settings
+appsettings.Development.json
+appsettings.Local.json
+
+# Temporary files
+*.tmp
+*.temp
+**/node_modules/
+
+# Test files
+test-modal.html

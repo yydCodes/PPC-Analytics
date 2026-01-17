@@ -1,0 +1,680 @@
+@{
+    ViewData["Title"] = "Payroll Intelligence Assistant";
+    var currentYear = DateTime.Now.Year;
+}
+
+<div class="container mt-4">
+    <!-- Page Introduction -->
+    <div class="alert alert-light border mb-4">
+        <h5 class="alert-heading mb-2"><i class="fas fa-clipboard-check text-primary me-2"></i>Payroll Review Dashboard</h5>
+        <p class="mb-0">
+            This tool helps payroll administrators and finance reviewers verify draft payrolls before approval.
+            It compares your current draft against the last approved period to surface changes that need attention.
+            <strong>Start with the Quick Preview below</strong>, then drill into specific features for details.
+        </p>
+    </div>
+
+    <!-- Quick Preview Section -->
+    <div id="quickPreviewSection" class="mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Preview</h5>
+                <button class="btn btn-sm btn-outline-light" id="refreshPreview" title="Refresh preview">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body" id="quickPreviewContent">
+                <!-- Loading state -->
+                <div id="previewLoading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="text-muted mt-2 mb-0">Loading payroll preview...</p>
+                </div>
+                
+                <!-- Error/Not configured state (hidden by default) -->
+                <div id="previewError" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-2" id="previewErrorMessage">Unable to load preview.</p>
+                    <a href="/Home/Settings" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-cog"></i> Configure API Settings
+                    </a>
+                </div>
+                
+                <!-- Preview content (hidden by default, populated via JS) -->
+                <div id="previewData" style="display: none;">
+                    <!-- Period info -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-file-alt me-1"></i><span id="previewDraftPeriod"></span>
+                            <span class="mx-1">vs</span>
+                            <i class="fas fa-check-circle me-1"></i><span id="previewApprovedPeriod"></span>
+                        </small>
+                        <span class="badge" id="previewConfidence"></span>
+                    </div>
+                    
+                    <!-- Summary (one sentence) -->
+                    <p class="mb-3" id="previewSummary"></p>
+                    
+                    <!-- Key Changes -->
+                    <div class="mb-3">
+                        <h6 class="text-muted small mb-2">Key Changes</h6>
+                        <div id="previewChanges"></div>
+                    </div>
+                    
+                    <!-- Suggested Actions -->
+                    <div id="suggestedActionsSection" style="display: none;">
+                        <h6 class="text-muted small mb-2">Suggested Actions</h6>
+                        <div id="suggestedActionsList" class="list-group list-group-flush"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period Selection Modal (for Comparison) -->
+<div class="modal fade" id="comparisonModal" tabindex="-1" aria-labelledby="comparisonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="comparisonModalLabel"><i class="fas fa-chart-line"></i> Select Payroll Periods to Compare</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Home/Comparison" id="comparisonForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Draft Payroll (Status 0) - Current -->
+                        <div class="col-md-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Draft Payroll (Current)</h6>
+                                    <small class="opacity-75">Status: Draft (0)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control comparison-draft-year" name="draftYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control comparison-draft-month" name="draftMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-draft-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No draft payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Payroll (Status 2) - Previous -->
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Approved Payroll (Previous)</h6>
+                                    <small class="opacity-75">Status: Approved (2)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control comparison-approved-year" name="comparisonYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control comparison-approved-month" name="comparisonMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-approved-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No approved payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <small><i class="fas fa-info-circle"></i> Compare your <strong>draft payroll</strong> (current) against a selected <strong>approved payroll</strong> (previous) to identify changes.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="comparisonSubmit" disabled>
+                        <i class="fas fa-chart-line"></i> Run Comparison
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Differences Modal -->
+<div class="modal fade" id="differencesModal" tabindex="-1" aria-labelledby="differencesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="differencesModalLabel"><i class="fas fa-search-plus"></i> Select Payroll Periods to Compare</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Home/Differences" id="differencesForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Draft Payroll (Status 0) - Current -->
+                        <div class="col-md-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Draft Payroll (Current)</h6>
+                                    <small class="opacity-75">Status: Draft (0)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control differences-draft-year" name="draftYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control differences-draft-month" name="draftMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-draft-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No draft payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approved Payroll (Status 2) - Previous -->
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Approved Payroll (Previous)</h6>
+                                    <small class="opacity-75">Status: Approved (2)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control differences-approved-year" name="comparisonYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control differences-approved-month" name="comparisonMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-approved-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No approved payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <small><i class="fas fa-info-circle"></i> Identify key differences in your <strong>draft payroll</strong> (current) compared to a selected <strong>approved payroll</strong> (previous).</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="differencesSubmit" disabled>
+                        <i class="fas fa-search-plus"></i> Find Differences
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Anomaly Detection Modal -->
+<div class="modal fade" id="anomalyModal" tabindex="-1" aria-labelledby="anomalyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="anomalyModalLabel"><i class="fas fa-search"></i> Configure Anomaly Detection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/Home/Anomalies" id="anomalyForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Draft Payroll (Status 0) -->
+                        <div class="col-md-6">
+                            <div class="card border-primary h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="fas fa-file-alt"></i> Draft Payroll to Analyze</h6>
+                                    <small class="opacity-75">Status: Draft (0)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control anomaly-draft-year" name="draftYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control anomaly-draft-month" name="draftMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-draft-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No draft payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comparison Payroll (Status 2) -->
+                        <div class="col-md-6">
+                            <div class="card border-success h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-check-circle"></i> Approved Payroll for Comparison</h6>
+                                    <small class="opacity-75">Status: Approved (2)</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Year</label>
+                                        <select class="form-control anomaly-comparison-year" name="comparisonYear" required>
+                                            @for (int y = currentYear; y >= 2022; y--)
+                                            {
+                                                <option value="@y">@y</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Month</label>
+                                        <select class="form-control anomaly-comparison-month" name="comparisonMonth" required disabled>
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <div class="no-approved-message text-danger mt-1" style="display:none;">
+                                            <small><i class="fas fa-exclamation-circle"></i> No approved payroll available.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 mb-0">
+                        <small><i class="fas fa-info-circle"></i> Compare your <strong>draft payroll</strong> against a selected <strong>approved payroll</strong> to detect anomalies before approval.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" id="anomalySubmit" disabled>
+                        <i class="fas fa-search"></i> Run Analysis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <!-- Feature Cards -->
+    <h6 class="text-muted mb-3"><i class="fas fa-tools me-1"></i>Analysis Tools</h6>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-chart-line fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Payroll Summary</h5>
+                    <p class="card-text text-muted">View totals, percentage changes, and top contributors to payroll differences.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#comparisonModal">
+                        Run Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-search-plus fa-3x text-success"></i>
+                    </div>
+                    <h5 class="card-title">Detailed Changes</h5>
+                    <p class="card-text text-muted">Drill into specific employee-level changes grouped by category.</p>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#differencesModal">
+                        Run Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="card-title">Risk & Review</h5>
+                    <p class="card-text text-muted">Flag unusual patterns that need verification before approval.</p>
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#anomalyModal">
+                        Run Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-12 text-center">
+            <a href="/Home/Settings" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-cog"></i> API Settings
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Cache for API responses
+    const draftMonthsCache = {};
+    const approvedMonthsCache = {};
+
+    // Generic function to load draft months
+    async function loadDraftMonths(modalId, yearSelectClass, monthSelectClass) {
+        const yearSelect = document.querySelector(`#${modalId} .${yearSelectClass}`);
+        const monthSelect = document.querySelector(`#${modalId} .${monthSelectClass}`);
+        const noPayrollMessage = monthSelect.parentElement.querySelector('.no-draft-message');
+        const year = yearSelect.value;
+
+        monthSelect.innerHTML = '<option value="">Loading...</option>';
+        monthSelect.disabled = true;
+        noPayrollMessage.style.display = 'none';
+
+        if (draftMonthsCache[year]) {
+            populateMonths(monthSelect, draftMonthsCache[year], noPayrollMessage, 'No draft payroll', 'first');
+            updateModalSubmitButton(modalId);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Home/GetDraftMonths?year=${year}`);
+            const data = await response.json();
+
+            if (data.success) {
+                draftMonthsCache[year] = data.months;
+                populateMonths(monthSelect, data.months, noPayrollMessage, 'No draft payroll', 'first');
+            } else {
+                monthSelect.innerHTML = '<option value="">Error</option>';
+            }
+        } catch (error) {
+            monthSelect.innerHTML = '<option value="">Error</option>';
+        }
+
+        updateModalSubmitButton(modalId);
+    }
+
+    // Generic function to load approved months (selects LATEST available month)
+    async function loadApprovedMonths(modalId, yearSelectClass, monthSelectClass) {
+        const yearSelect = document.querySelector(`#${modalId} .${yearSelectClass}`);
+        const monthSelect = document.querySelector(`#${modalId} .${monthSelectClass}`);
+        const noPayrollMessage = monthSelect.parentElement.querySelector('.no-approved-message');
+        const year = yearSelect.value;
+
+        monthSelect.innerHTML = '<option value="">Loading...</option>';
+        monthSelect.disabled = true;
+        noPayrollMessage.style.display = 'none';
+
+        if (approvedMonthsCache[year]) {
+            populateMonths(monthSelect, approvedMonthsCache[year], noPayrollMessage, 'No approved payroll', 'latest');
+            updateModalSubmitButton(modalId);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Home/GetApprovedMonths?year=${year}`);
+            const data = await response.json();
+
+            if (data.success) {
+                approvedMonthsCache[year] = data.months;
+                populateMonths(monthSelect, data.months, noPayrollMessage, 'No approved payroll', 'latest');
+            } else {
+                monthSelect.innerHTML = '<option value="">Error</option>';
+            }
+        } catch (error) {
+            monthSelect.innerHTML = '<option value="">Error</option>';
+        }
+
+        updateModalSubmitButton(modalId);
+    }
+
+    // Populate month dropdown
+    // defaultSelection: 'first' = select first/earliest month, 'latest' = select last/latest month
+    function populateMonths(monthSelect, months, noPayrollMessage, emptyMessage, defaultSelection = 'latest') {
+        monthSelect.innerHTML = '';
+
+        if (months.length === 0) {
+            monthSelect.innerHTML = `<option value="">${emptyMessage}</option>`;
+            monthSelect.disabled = true;
+            noPayrollMessage.style.display = 'block';
+        } else {
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = month.value;
+                option.textContent = month.name;
+                
+                // Select first or latest month based on defaultSelection parameter
+                if (defaultSelection === 'first' && index === 0) {
+                    option.selected = true;
+                } else if (defaultSelection === 'latest' && index === months.length - 1) {
+                    option.selected = true;
+                }
+                
+                monthSelect.appendChild(option);
+            });
+            monthSelect.disabled = false;
+            noPayrollMessage.style.display = 'none';
+        }
+    }
+
+    // Update submit button state for each modal
+    function updateModalSubmitButton(modalId) {
+        let submitBtn, draftMonth, approvedMonth;
+
+        if (modalId === 'comparisonModal') {
+            submitBtn = document.getElementById('comparisonSubmit');
+            draftMonth = document.querySelector('#comparisonModal .comparison-draft-month');
+            approvedMonth = document.querySelector('#comparisonModal .comparison-approved-month');
+        } else if (modalId === 'differencesModal') {
+            submitBtn = document.getElementById('differencesSubmit');
+            draftMonth = document.querySelector('#differencesModal .differences-draft-month');
+            approvedMonth = document.querySelector('#differencesModal .differences-approved-month');
+        } else if (modalId === 'anomalyModal') {
+            submitBtn = document.getElementById('anomalySubmit');
+            draftMonth = document.querySelector('#anomalyModal .anomaly-draft-month');
+            approvedMonth = document.querySelector('#anomalyModal .anomaly-comparison-month');
+        }
+
+        const draftValid = draftMonth && draftMonth.value && !draftMonth.disabled;
+        const approvedValid = approvedMonth && approvedMonth.value && !approvedMonth.disabled;
+        
+        submitBtn.disabled = !(draftValid && approvedValid);
+    }
+
+    // ========== QUICK PREVIEW FUNCTIONS ==========
+    async function loadQuickPreview() {
+        const loadingEl = document.getElementById('previewLoading');
+        const errorEl = document.getElementById('previewError');
+        const errorMsgEl = document.getElementById('previewErrorMessage');
+        const dataEl = document.getElementById('previewData');
+        
+        // Show loading state
+        loadingEl.style.display = 'block';
+        errorEl.style.display = 'none';
+        dataEl.style.display = 'none';
+        
+        try {
+            const response = await fetch('/Home/GetQuickPreview');
+            const data = await response.json();
+            
+            if (!data.success) {
+                // Show error state
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorMsgEl.textContent = data.message || 'Unable to load preview.';
+                return;
+            }
+            
+            // Populate preview data
+            document.getElementById('previewDraftPeriod').textContent = data.draftPeriod;
+            document.getElementById('previewApprovedPeriod').textContent = data.approvedPeriod;
+            document.getElementById('previewSummary').textContent = data.summary;
+            
+            // Confidence badge
+            const confidenceBadge = document.getElementById('previewConfidence');
+            const confidenceColors = { high: 'bg-success', medium: 'bg-warning', low: 'bg-secondary' };
+            const level = data.confidence_level || 'medium';
+            confidenceBadge.className = `badge ${confidenceColors[level] || 'bg-secondary'}`;
+            confidenceBadge.textContent = `${level.charAt(0).toUpperCase() + level.slice(1)} confidence`;
+            
+            // Key changes (simple string array)
+            const changesEl = document.getElementById('previewChanges');
+            if (data.key_changes && data.key_changes.length > 0) {
+                let changesHtml = '<ul class="list-unstyled mb-0">';
+                data.key_changes.forEach(change => {
+                    changesHtml += `<li class="small mb-1"><i class="fas fa-circle text-primary me-2" style="font-size: 6px; vertical-align: middle;"></i>${change}</li>`;
+                });
+                changesHtml += '</ul>';
+                changesEl.innerHTML = changesHtml;
+            } else {
+                changesEl.innerHTML = '<p class="text-muted small mb-0"><i class="fas fa-check-circle text-success me-1"></i>No significant changes detected.</p>';
+            }
+            
+            // Suggested actions (simple string array)
+            const actionsSection = document.getElementById('suggestedActionsSection');
+            const actionsList = document.getElementById('suggestedActionsList');
+            if (data.suggested_actions && data.suggested_actions.length > 0) {
+                let actionsHtml = '';
+                data.suggested_actions.forEach(action => {
+                    actionsHtml += `
+                        <div class="list-group-item d-flex align-items-center py-2 px-0 border-0">
+                            <i class="fas fa-arrow-right text-muted me-2" style="font-size: 10px;"></i>
+                            <span class="small">${action}</span>
+                        </div>
+                    `;
+                });
+                actionsList.innerHTML = actionsHtml;
+                actionsSection.style.display = 'block';
+            } else {
+                actionsSection.style.display = 'none';
+            }
+            
+            // Show data
+            loadingEl.style.display = 'none';
+            dataEl.style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error loading quick preview:', error);
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorMsgEl.textContent = 'Unable to connect to the server.';
+        }
+    }
+
+    // Initialize event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // ========== LOAD QUICK PREVIEW ==========
+        loadQuickPreview();
+        
+        // Refresh button
+        document.getElementById('refreshPreview').addEventListener('click', function() {
+            loadQuickPreview();
+        });
+        
+        // ========== COMPARISON MODAL ==========
+        document.getElementById('comparisonModal').addEventListener('show.bs.modal', function() {
+            loadDraftMonths('comparisonModal', 'comparison-draft-year', 'comparison-draft-month');
+            loadApprovedMonths('comparisonModal', 'comparison-approved-year', 'comparison-approved-month');
+        });
+
+        document.querySelector('#comparisonModal .comparison-draft-year').addEventListener('change', function() {
+            loadDraftMonths('comparisonModal', 'comparison-draft-year', 'comparison-draft-month');
+        });
+
+        document.querySelector('#comparisonModal .comparison-approved-year').addEventListener('change', function() {
+            loadApprovedMonths('comparisonModal', 'comparison-approved-year', 'comparison-approved-month');
+        });
+
+        document.querySelector('#comparisonModal .comparison-draft-month').addEventListener('change', function() {
+            updateModalSubmitButton('comparisonModal');
+        });
+
+        document.querySelector('#comparisonModal .comparison-approved-month').addEventListener('change', function() {
+            updateModalSubmitButton('comparisonModal');
+        });
+
+        // ========== DIFFERENCES MODAL ==========
+        document.getElementById('differencesModal').addEventListener('show.bs.modal', function() {
+            loadDraftMonths('differencesModal', 'differences-draft-year', 'differences-draft-month');
+            loadApprovedMonths('differencesModal', 'differences-approved-year', 'differences-approved-month');
+        });
+
+        document.querySelector('#differencesModal .differences-draft-year').addEventListener('change', function() {
+            loadDraftMonths('differencesModal', 'differences-draft-year', 'differences-draft-month');
+        });
+
+        document.querySelector('#differencesModal .differences-approved-year').addEventListener('change', function() {
+            loadApprovedMonths('differencesModal', 'differences-approved-year', 'differences-approved-month');
+        });
+
+        document.querySelector('#differencesModal .differences-draft-month').addEventListener('change', function() {
+            updateModalSubmitButton('differencesModal');
+        });
+
+        document.querySelector('#differencesModal .differences-approved-month').addEventListener('change', function() {
+            updateModalSubmitButton('differencesModal');
+        });
+
+        // ========== ANOMALY MODAL ==========
+        document.getElementById('anomalyModal').addEventListener('show.bs.modal', function() {
+            loadDraftMonths('anomalyModal', 'anomaly-draft-year', 'anomaly-draft-month');
+            loadApprovedMonths('anomalyModal', 'anomaly-comparison-year', 'anomaly-comparison-month');
+        });
+
+        document.querySelector('#anomalyModal .anomaly-draft-year').addEventListener('change', function() {
+            loadDraftMonths('anomalyModal', 'anomaly-draft-year', 'anomaly-draft-month');
+        });
+
+        document.querySelector('#anomalyModal .anomaly-comparison-year').addEventListener('change', function() {
+            loadApprovedMonths('anomalyModal', 'anomaly-comparison-year', 'anomaly-comparison-month');
+        });
+
+        document.querySelector('#anomalyModal .anomaly-draft-month').addEventListener('change', function() {
+            updateModalSubmitButton('anomalyModal');
+        });
+
+        document.querySelector('#anomalyModal .anomaly-comparison-month').addEventListener('change', function() {
+            updateModalSubmitButton('anomalyModal');
+        });
+    });
+</script>
+}

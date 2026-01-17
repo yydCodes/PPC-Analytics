@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  payroll-intelligence:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payroll-intelligence-app
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      # API Configuration (override these with your actual values)
+      - PayrollApi__ClientId=${PAYROLL_API_CLIENT_ID:-}
+      - PayrollApi__ClientSecret=${PAYROLL_API_CLIENT_SECRET:-}
+      - PayrollApi__BaseUrl=${PAYROLL_API_BASE_URL:-https://your-api-domain.com}
+      - PayrollApi__TimeoutSeconds=${PAYROLL_API_TIMEOUT_SECONDS:-30}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Optional: Mount volume for persistent appsettings
+    # volumes:
+    #   - ./appsettings.Production.json:/app/appsettings.Production.json:ro
+
+# Optional: Add network for multi-container setups
+networks:
+  default:
+    name: payroll-network

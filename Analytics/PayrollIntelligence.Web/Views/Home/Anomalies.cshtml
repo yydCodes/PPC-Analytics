@@ -1,0 +1,540 @@
+@model PayrollIntelligence.Core.AnomalyDetectionResult?
+
+@{
+    ViewData["Title"] = "Risk & Review";
+    var currentYear = DateTime.Now.Year;
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active">Risk & Review</li>
+        </ol>
+    </nav>
+
+    <!-- Selection Modal -->
+    <div class="modal fade" id="periodSelectionModal" tabindex="-1" aria-labelledby="periodSelectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="periodSelectionModalLabel"><i class="fas fa-search"></i> Configure Anomaly Detection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" id="anomalyForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <!-- Draft Payroll (Status 0) -->
+                            <div class="col-md-6">
+                                <div class="card border-primary h-100">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0"><i class="fas fa-file-alt"></i> Draft Payroll to Analyze</h6>
+                                        <small class="opacity-75">Status: Draft (0)</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Year</label>
+                                            <select class="form-control" name="draftYear" id="draftYear" required>
+                                                @for (int y = currentYear; y >= 2022; y--)
+                                                {
+                                                    <option value="@y">@y</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Month</label>
+                                            <select class="form-control" name="draftMonth" id="draftMonth" required disabled>
+                                                <option value="">Loading...</option>
+                                            </select>
+                                            <div class="no-draft-message text-danger mt-1" style="display:none;">
+                                                <small><i class="fas fa-exclamation-circle"></i> No draft payroll available for the selected year.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comparison Payroll (Status 2) -->
+                            <div class="col-md-6">
+                                <div class="card border-success h-100">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-check-circle"></i> Approved Payroll for Comparison</h6>
+                                        <small class="opacity-75">Status: Approved (2)</small>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Year</label>
+                                            <select class="form-control" name="comparisonYear" id="comparisonYear" required>
+                                                @for (int y = currentYear; y >= 2022; y--)
+                                                {
+                                                    <option value="@y">@y</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Month</label>
+                                            <select class="form-control" name="comparisonMonth" id="comparisonMonth" required disabled>
+                                                <option value="">Loading...</option>
+                                            </select>
+                                            <div class="no-approved-message text-danger mt-1" style="display:none;">
+                                                <small><i class="fas fa-exclamation-circle"></i> No approved payroll available for the selected year.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3 mb-0">
+                            <small><i class="fas fa-info-circle"></i> Compare your <strong>draft payroll</strong> against a selected <strong>approved payroll</strong> to detect anomalies before approval.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning" id="submitBtn" disabled>
+                            <i class="fas fa-search"></i> Run Analysis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Risk & Review</h4>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#periodSelectionModal">
+                        <i class="fas fa-cog"></i> Change Settings
+                    </button>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(ViewBag.Error))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <h5><i class="fas fa-exclamation-triangle"></i> Analysis Error</h5>
+                            <p class="mb-0">@ViewBag.Error</p>
+                        </div>
+                    }
+                    else if (Model != null)
+                    {
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-4">
+                                            <i class="fas fa-file-alt text-primary"></i>
+                                            <strong>Draft:</strong> @ViewBag.DraftPeriod
+                                        </div>
+                                        <div class="me-4">
+                                            <i class="fas fa-arrow-right"></i>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            <strong>Compared against:</strong> @ViewBag.ComparisonPeriod (Approved)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Page Context Help -->
+                        <div class="alert alert-light border mb-4">
+                            <i class="fas fa-info-circle text-warning me-2"></i>
+                            <strong>What you're looking at:</strong> This page flags unusual patterns or inconsistencies in your draft payroll compared to historical data.
+                            It's designed for payroll approvers who need to catch potential errors before finalizing.
+                            <strong>Start with high-severity items</strong> (marked in red), then review medium-priority ones if time permits.
+                        </div>
+
+                        <!-- Summary Section -->
+                        @if (!string.IsNullOrEmpty(Model.summary))
+                        {
+                            <div class="alert alert-info mb-4">
+                                <h6><i class="fas fa-clipboard-list"></i> Summary</h6>
+                                <p class="mb-0">@Model.summary</p>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Anomalies Detected</h5>
+                            @if (Model.anomalies.Any())
+                            {
+                                <div>
+                                    <button class="btn btn-outline-secondary btn-sm" id="expandAllBtn" onclick="toggleAllAccordions(true)">
+                                        <i class="fas fa-expand-alt"></i> Expand All
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" id="collapseAllBtn" onclick="toggleAllAccordions(false)">
+                                        <i class="fas fa-compress-alt"></i> Collapse All
+                                    </button>
+                                </div>
+                            }
+                        </div>
+
+                        @if (Model.anomalies.Any())
+                        {
+                            <!-- Group anomalies by category, then by title -->
+                            var groupedByCategory = Model.anomalies
+                                .GroupBy(a => a.category)
+                                .OrderByDescending(g => g.Any(a => a.severity == "high"))
+                                .ThenByDescending(g => g.Any(a => a.severity == "medium"));
+                            
+                            var categoryIndex = 0;
+                            <div class="accordion" id="anomalyAccordion">
+                                @foreach (var categoryGroup in groupedByCategory)
+                                {
+                                    var categoryId = $"category-{categoryIndex}";
+                                    var highestSeverity = categoryGroup.Any(a => a.severity == "high") ? "high" : 
+                                                          categoryGroup.Any(a => a.severity == "medium") ? "medium" : "low";
+                                    var categoryBorderClass = highestSeverity switch
+                                    {
+                                        "high" => "border-danger",
+                                        "medium" => "border-warning",
+                                        _ => "border-info"
+                                    };
+                                    var categoryBgClass = highestSeverity switch
+                                    {
+                                        "high" => "bg-danger text-white",
+                                        "medium" => "bg-warning text-dark",
+                                        _ => "bg-info text-white"
+                                    };
+
+                                    <div class="accordion-item @categoryBorderClass mb-3">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button @categoryBgClass" type="button" data-bs-toggle="collapse" data-bs-target="#@categoryId" aria-expanded="true" aria-controls="@categoryId">
+                                                <i class="fas fa-folder-open me-2"></i>
+                                                <strong>@categoryGroup.Key</strong>
+                                                <span class="badge bg-light text-dark ms-2">@categoryGroup.Count() item(s)</span>
+                                            </button>
+                                        </h2>
+                                        <div id="@categoryId" class="accordion-collapse collapse show" data-bs-parent="#anomalyAccordion">
+                                            <div class="accordion-body p-2">
+                                                <!-- Group by title within category -->
+                                                @{
+                                                    var groupedByTitle = categoryGroup
+                                                        .GroupBy(a => a.title)
+                                                        .OrderByDescending(g => g.Any(a => a.severity == "high") ? 3 : g.Any(a => a.severity == "medium") ? 2 : 1);
+                                                    var titleIndex = 0;
+                                                }
+                                                <div class="accordion" id="@($"titleAccordion-{categoryIndex}")">
+                                                    @foreach (var titleGroup in groupedByTitle)
+                                                    {
+                                                        var titleId = $"title-{categoryIndex}-{titleIndex}";
+                                                        var titleSeverity = titleGroup.Any(a => a.severity == "high") ? "high" : 
+                                                                            titleGroup.Any(a => a.severity == "medium") ? "medium" : "low";
+                                                        var titleBorderClass = titleSeverity switch
+                                                        {
+                                                            "high" => "border-danger",
+                                                            "medium" => "border-warning",
+                                                            _ => "border-info"
+                                                        };
+                                                        var severityBadgeClass = titleSeverity switch
+                                                        {
+                                                            "high" => "bg-danger",
+                                                            "medium" => "bg-warning text-dark",
+                                                            _ => "bg-info"
+                                                        };
+                                                        var severityIcon = titleSeverity switch
+                                                        {
+                                                            "high" => "fas fa-exclamation-triangle",
+                                                            "medium" => "fas fa-exclamation-circle",
+                                                            _ => "fas fa-info-circle"
+                                                        };
+
+                                                        <div class="accordion-item @titleBorderClass mb-2">
+                                                            <h2 class="accordion-header">
+                                                                <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#@titleId" aria-expanded="false" aria-controls="@titleId">
+                                                                    <i class="@severityIcon me-2"></i>
+                                                                    <span class="badge @severityBadgeClass me-2">@titleSeverity.ToUpper()</span>
+                                                                    @titleGroup.Key
+                                                                    <span class="badge bg-secondary ms-auto me-2">@titleGroup.Count() affected</span>
+                                                                </button>
+                                                            </h2>
+                                                            <div id="@titleId" class="accordion-collapse collapse">
+                                                                <div class="accordion-body">
+                                                                    <!-- List all anomalies with this title -->
+                                                                    <div class="table-responsive">
+                                                                        <table class="table table-sm table-hover mb-0">
+                                                                            <thead class="table-light">
+                                                                                <tr>
+                                                                                    <th style="width: 20%;">Reference</th>
+                                                                                    <th style="width: 45%;">Explanation</th>
+                                                                                    <th style="width: 35%;">Review Suggestion</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach (var anomaly in titleGroup.OrderBy(a => a.reference))
+                                                                                {
+                                                                                    var scopeIcon = anomaly.scope.ToLower() switch
+                                                                                    {
+                                                                                        "employee" => "fas fa-user",
+                                                                                        "payroll" => "fas fa-file-invoice-dollar",
+                                                                                        _ => "fas fa-circle"
+                                                                                    };
+
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            <i class="@scopeIcon text-muted me-1"></i>
+                                                                                            <span class="text-primary fw-bold">@anomaly.reference</span>
+                                                                                        </td>
+                                                                                        <td><small>@anomaly.explanation</small></td>
+                                                                                        <td>
+                                                                                            <small class="text-muted fst-italic">
+                                                                                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                                                                                @anomaly.review_suggestion
+                                                                                            </small>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                }
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        titleIndex++;
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    categoryIndex++;
+                                }
+                            </div>
+
+                            <!-- Suggested Review Actions -->
+                            var highCount = Model.anomalies.Count(a => a.severity == "high");
+                            var mediumCount = Model.anomalies.Count(a => a.severity == "medium");
+                            var hasStatutoryIssues = Model.anomalies.Any(a => a.category == "Statutory");
+                            var hasLeaveIssues = Model.anomalies.Any(a => a.category == "Leave");
+                            <div class="card mt-4 border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Suggested Next Steps</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small mb-3">These are optional review actions to consider before approval:</p>
+                                    <ul class="list-group list-group-flush">
+                                        @if (highCount > 0)
+                                        {
+                                            <li class="list-group-item d-flex align-items-start">
+                                                <span class="badge bg-danger me-3 mt-1">1</span>
+                                                <div>
+                                                    <strong>Investigate high-priority items first</strong>
+                                                    <p class="mb-0 text-muted small">@highCount item(s) flagged as high severity may indicate data entry errors or missing approvals.</p>
+                                                </div>
+                                            </li>
+                                        }
+                                        @if (hasStatutoryIssues)
+                                        {
+                                            <li class="list-group-item d-flex align-items-start">
+                                                <span class="badge bg-info text-white me-3 mt-1">@(highCount > 0 ? "2" : "1")</span>
+                                                <div>
+                                                    <strong>Verify statutory contribution settings</strong>
+                                                    <p class="mb-0 text-muted small">Confirm EPF/SOCSO/EIS rates and employee categories are correctly configured.</p>
+                                                </div>
+                                            </li>
+                                        }
+                                        @if (hasLeaveIssues)
+                                        {
+                                            <li class="list-group-item d-flex align-items-start">
+                                                <span class="badge bg-secondary me-3 mt-1">@(highCount > 0 ? (hasStatutoryIssues ? "3" : "2") : (hasStatutoryIssues ? "2" : "1"))</span>
+                                                <div>
+                                                    <strong>Reconcile leave records with HR</strong>
+                                                    <p class="mb-0 text-muted small">Cross-check unpaid leave and leave pay entries against approved leave applications.</p>
+                                                </div>
+                                            </li>
+                                        }
+                                        @if (highCount == 0 && !hasStatutoryIssues && !hasLeaveIssues && mediumCount > 0)
+                                        {
+                                            <li class="list-group-item d-flex align-items-start">
+                                                <span class="badge bg-warning text-dark me-3 mt-1">1</span>
+                                                <div>
+                                                    <strong>Spot-check medium-priority items</strong>
+                                                    <p class="mb-0 text-muted small">Review @mediumCount medium-priority item(s) to confirm they reflect expected changes.</p>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> No anomalies detected. The current payroll appears consistent with historical patterns.
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <h5><i class="fas fa-info-circle"></i> No Analysis Results</h5>
+                            <p class="mb-0">Please select current period and analysis settings using the button above.</p>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <a href="/" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                    <button type="button" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#periodSelectionModal">
+                        <i class="fas fa-sync"></i> New Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Expand/Collapse all accordions
+    function toggleAllAccordions(expand) {
+        const accordions = document.querySelectorAll('.accordion-collapse');
+        accordions.forEach(accordion => {
+            if (expand) {
+                accordion.classList.add('show');
+                const button = document.querySelector(`[data-bs-target="#${accordion.id}"]`);
+                if (button) button.classList.remove('collapsed');
+            } else {
+                accordion.classList.remove('show');
+                const button = document.querySelector(`[data-bs-target="#${accordion.id}"]`);
+                if (button) button.classList.add('collapsed');
+            }
+        });
+    }
+
+    const draftMonthsCache = {};
+    const approvedMonthsCache = {};
+
+    // Load draft months for the draft payroll selector
+    async function loadDraftMonths() {
+        const yearSelect = document.getElementById('draftYear');
+        const monthSelect = document.getElementById('draftMonth');
+        const noPayrollMessage = document.querySelector('.no-draft-message');
+        const year = yearSelect.value;
+
+        monthSelect.innerHTML = '<option value="">Loading...</option>';
+        monthSelect.disabled = true;
+        noPayrollMessage.style.display = 'none';
+
+        if (draftMonthsCache[year]) {
+            populateMonths(monthSelect, draftMonthsCache[year], noPayrollMessage, 'No draft payroll', 'first');
+            updateSubmitButton();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Home/GetDraftMonths?year=${year}`);
+            const data = await response.json();
+
+            if (data.success) {
+                draftMonthsCache[year] = data.months;
+                populateMonths(monthSelect, data.months, noPayrollMessage, 'No draft payroll', 'first');
+            } else {
+                monthSelect.innerHTML = '<option value="">Error loading months</option>';
+            }
+        } catch (error) {
+            monthSelect.innerHTML = '<option value="">Error loading months</option>';
+        }
+
+        updateSubmitButton();
+    }
+
+    // Load approved months for the comparison payroll selector
+    async function loadApprovedMonths() {
+        const yearSelect = document.getElementById('comparisonYear');
+        const monthSelect = document.getElementById('comparisonMonth');
+        const noPayrollMessage = document.querySelector('.no-approved-message');
+        const year = yearSelect.value;
+
+        monthSelect.innerHTML = '<option value="">Loading...</option>';
+        monthSelect.disabled = true;
+        noPayrollMessage.style.display = 'none';
+
+        if (approvedMonthsCache[year]) {
+            populateMonths(monthSelect, approvedMonthsCache[year], noPayrollMessage, 'No approved payroll', 'latest');
+            updateSubmitButton();
+            return;
+        }
+
+        try {
+            const response = await fetch(`/Home/GetApprovedMonths?year=${year}`);
+            const data = await response.json();
+
+            if (data.success) {
+                approvedMonthsCache[year] = data.months;
+                populateMonths(monthSelect, data.months, noPayrollMessage, 'No approved payroll', 'latest');
+            } else {
+                monthSelect.innerHTML = '<option value="">Error loading months</option>';
+            }
+        } catch (error) {
+            monthSelect.innerHTML = '<option value="">Error loading months</option>';
+        }
+
+        updateSubmitButton();
+    }
+
+    // Populate month dropdown
+    // defaultSelection: 'first' = select first/earliest month, 'latest' = select last/latest month
+    function populateMonths(monthSelect, months, noPayrollMessage, emptyMessage, defaultSelection = 'latest') {
+        monthSelect.innerHTML = '';
+
+        if (months.length === 0) {
+            monthSelect.innerHTML = `<option value="">${emptyMessage}</option>`;
+            monthSelect.disabled = true;
+            noPayrollMessage.style.display = 'block';
+        } else {
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = month.value;
+                option.textContent = month.name;
+                
+                // Select first or latest month based on defaultSelection parameter
+                if (defaultSelection === 'first' && index === 0) {
+                    option.selected = true;
+                } else if (defaultSelection === 'latest' && index === months.length - 1) {
+                    option.selected = true;
+                }
+                
+                monthSelect.appendChild(option);
+            });
+            monthSelect.disabled = false;
+            noPayrollMessage.style.display = 'none';
+        }
+    }
+
+    function updateSubmitButton() {
+        const submitBtn = document.getElementById('submitBtn');
+        const draftMonth = document.getElementById('draftMonth');
+        const comparisonMonth = document.getElementById('comparisonMonth');
+        
+        const draftValid = draftMonth.value && !draftMonth.disabled;
+        const comparisonValid = comparisonMonth.value && !comparisonMonth.disabled;
+        
+        submitBtn.disabled = !(draftValid && comparisonValid);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add change listeners for year selectors
+        document.getElementById('draftYear').addEventListener('change', loadDraftMonths);
+        document.getElementById('comparisonYear').addEventListener('change', loadApprovedMonths);
+
+        // Add change listeners for month selectors to update submit button
+        document.getElementById('draftMonth').addEventListener('change', updateSubmitButton);
+        document.getElementById('comparisonMonth').addEventListener('change', updateSubmitButton);
+
+        // Load months when modal opens
+        document.getElementById('periodSelectionModal').addEventListener('show.bs.modal', function() {
+            loadDraftMonths();
+            loadApprovedMonths();
+        });
+
+        @if (Model == null)
+        {
+            <text>
+            var modal = new bootstrap.Modal(document.getElementById('periodSelectionModal'));
+            modal.show();
+            </text>
+        }
+    });
+</script>
+}
