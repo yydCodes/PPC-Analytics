@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "gVkgUVhA2cA=",
+  "dgSpecHash": "55EmwU1jzXg=",
   "success": true,
-  "projectFilePath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
+  "projectFilePath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\fukki\\.nuget\\packages\\microsoft.extensions.configuration\\8.0.0\\microsoft.extensions.configuration.8.0.0.nupkg.sha512",
     "C:\\Users\\fukki\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\8.0.0\\microsoft.extensions.configuration.abstractions.8.0.0.nupkg.sha512",

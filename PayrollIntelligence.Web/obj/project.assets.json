@@ -804,11 +804,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
+      "projectUniqueName": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
       "projectName": "PayrollIntelligence.Web",
-      "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
+      "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Web\\PayrollIntelligence.Web.csproj",
       "packagesPath": "C:\\Users\\fukki\\.nuget\\packages\\",
-      "outputPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Web\\obj\\",
+      "outputPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Web\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\fukki\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -823,8 +823,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj": {
-              "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj"
+            "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj": {
+              "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj"
             }
           }
         }
