@@ -62,8 +62,8 @@ Configure the application using environment variables:
 Create a `.env` file in the PayrollIntelligence.Web directory:
 
 ```env
-PAYROLL_API_CLIENT_ID=your-client-id
-PAYROLL_API_CLIENT_SECRET=your-client-secret
+PAYROLL_API_CLIENT_ID=your-client-id or empty
+PAYROLL_API_CLIENT_SECRET=your-client-secret or empty
 PAYROLL_API_BASE_URL=https://your-api-domain.com
 PAYROLL_API_TIMEOUT_SECONDS=30
 ```
@@ -195,11 +195,11 @@ Configure the API settings in `appsettings.json`:
 ```
 
 **Required Settings:**
-- `ClientId`: Your OAuth2 client identifier
-- `ClientSecret`: Your OAuth2 client secret
 - `BaseUrl`: The base URL of your payroll API (e.g., "https://your-api-domain.com")
 
 **Optional Settings:**
+- `ClientId`: Your OAuth2 client identifier
+- `ClientSecret`: Your OAuth2 client secret
 - `TimeoutSeconds`: HTTP client timeout in seconds (default: 30)
 
 **Alternative Configuration:**
