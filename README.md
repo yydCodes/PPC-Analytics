@@ -59,7 +59,7 @@ Configure the application using environment variables:
 
 ### Using a .env File
 
-Create a `.env` file in the Analytics directory:
+Create a `.env` file in the PayrollIntelligence.Web directory:
 
 ```env
 PAYROLL_API_CLIENT_ID=your-client-id
@@ -214,23 +214,14 @@ You can also use environment variables:
 ## Project Structure
 
 ```
-Analytics/
-├── PayrollIntelligence.Core/       # Core business logic and services
-│   ├── Services/
-│   │   ├── PayrollComparisonService.cs
-│   │   ├── PayrollDifferencesService.cs
-│   │   └── PayrollAnomalyService.cs
-│   ├── PayrollModels.cs
-│   ├── PayrollApiService.cs
-│   ├── PayrollAnalysisService.cs
-│   └── ApiConfiguration.cs
-├── PayrollIntelligence.Web/        # ASP.NET Core Web Application
-│   ├── Controllers/
-│   ├── Views/
-│   └── wwwroot/
+.
+├── PayrollIntelligence.Core/
+│   └── PayrollIntelligence.Core.csproj
+├── PayrollIntelligence.Web/
+│   └── PayrollIntelligence.Web.csproj
+├── PayrollIntelligence.sln
 ├── Dockerfile
 ├── docker-compose.yml
-├── Analytics.sln
 └── README.md
 ```
 
@@ -247,21 +238,19 @@ Analytics/
 ### Building
 
 ```bash
-cd Analytics
 dotnet build
 ```
 
 ### Running the Web Application
 
 ```bash
-cd Analytics/PayrollIntelligence.Web
+cd PayrollIntelligence.Web
 dotnet run --urls=http://localhost:5000
 ```
 
 Or from the solution root:
 
 ```bash
-cd Analytics
 dotnet run --project PayrollIntelligence.Web --urls=http://localhost:5000
 ```
 

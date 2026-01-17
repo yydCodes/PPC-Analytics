@@ -9,12 +9,12 @@ services:
     ports:
       - "5000:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:80
       # API Configuration (override these with your actual values)
       - PayrollApi__ClientId=${PAYROLL_API_CLIENT_ID:-}
       - PayrollApi__ClientSecret=${PAYROLL_API_CLIENT_SECRET:-}
-      - PayrollApi__BaseUrl=${PAYROLL_API_BASE_URL:-https://your-api-domain.com}
+      - PayrollApi__BaseUrl=${PAYROLL_API_BASE_URL:-https://web-api.dev.pp2.payrollpanda.my}
       - PayrollApi__TimeoutSeconds=${PAYROLL_API_TIMEOUT_SECONDS:-30}
     restart: unless-stopped
     healthcheck:
