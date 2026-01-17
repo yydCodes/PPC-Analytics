@@ -59,11 +59,11 @@ Configure the application using environment variables:
 
 ### Using a .env File
 
-Create a `.env` file in the Analytics directory:
+Create a `.env` file in the PayrollIntelligence.Web directory:
 
 ```env
-PAYROLL_API_CLIENT_ID=your-client-id
-PAYROLL_API_CLIENT_SECRET=your-client-secret
+PAYROLL_API_CLIENT_ID=your-client-id or empty
+PAYROLL_API_CLIENT_SECRET=your-client-secret or empty
 PAYROLL_API_BASE_URL=https://your-api-domain.com
 PAYROLL_API_TIMEOUT_SECONDS=30
 ```
@@ -195,11 +195,11 @@ Configure the API settings in `appsettings.json`:
 ```
 
 **Required Settings:**
-- `ClientId`: Your OAuth2 client identifier
-- `ClientSecret`: Your OAuth2 client secret
 - `BaseUrl`: The base URL of your payroll API (e.g., "https://your-api-domain.com")
 
 **Optional Settings:**
+- `ClientId`: Your OAuth2 client identifier
+- `ClientSecret`: Your OAuth2 client secret
 - `TimeoutSeconds`: HTTP client timeout in seconds (default: 30)
 
 **Alternative Configuration:**
@@ -214,23 +214,14 @@ You can also use environment variables:
 ## Project Structure
 
 ```
-Analytics/
-├── PayrollIntelligence.Core/       # Core business logic and services
-│   ├── Services/
-│   │   ├── PayrollComparisonService.cs
-│   │   ├── PayrollDifferencesService.cs
-│   │   └── PayrollAnomalyService.cs
-│   ├── PayrollModels.cs
-│   ├── PayrollApiService.cs
-│   ├── PayrollAnalysisService.cs
-│   └── ApiConfiguration.cs
-├── PayrollIntelligence.Web/        # ASP.NET Core Web Application
-│   ├── Controllers/
-│   ├── Views/
-│   └── wwwroot/
+.
+├── PayrollIntelligence.Core/
+│   └── PayrollIntelligence.Core.csproj
+├── PayrollIntelligence.Web/
+│   └── PayrollIntelligence.Web.csproj
+├── PayrollIntelligence.sln
 ├── Dockerfile
 ├── docker-compose.yml
-├── Analytics.sln
 └── README.md
 ```
 
@@ -247,21 +238,19 @@ Analytics/
 ### Building
 
 ```bash
-cd Analytics
 dotnet build
 ```
 
 ### Running the Web Application
 
 ```bash
-cd Analytics/PayrollIntelligence.Web
+cd PayrollIntelligence.Web
 dotnet run --urls=http://localhost:5000
 ```
 
 Or from the solution root:
 
 ```bash
-cd Analytics
 dotnet run --project PayrollIntelligence.Web --urls=http://localhost:5000
 ```
 

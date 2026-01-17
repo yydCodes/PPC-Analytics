@@ -786,11 +786,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj",
+      "projectUniqueName": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj",
       "projectName": "PayrollIntelligence.Core",
-      "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj",
+      "projectPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Core\\PayrollIntelligence.Core.csproj",
       "packagesPath": "C:\\Users\\fukki\\.nuget\\packages\\",
-      "outputPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\Analytics\\PayrollIntelligence.Core\\obj\\",
+      "outputPath": "D:\\OwnProjects\\Hackathon\\PPC-Analytics\\PayrollIntelligence.Core\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\fukki\\AppData\\Roaming\\NuGet\\NuGet.Config"

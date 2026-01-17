@@ -8,7 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy solution and project files first (for better caching)
-COPY Analytics.sln .
+COPY PayrollIntelligence.sln .
 COPY PayrollIntelligence.Core/PayrollIntelligence.Core.csproj PayrollIntelligence.Core/
 COPY PayrollIntelligence.Web/PayrollIntelligence.Web.csproj PayrollIntelligence.Web/
 
@@ -36,7 +36,7 @@ WORKDIR /app
 
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:80
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_ENVIRONMENT=Development
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser
