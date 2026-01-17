@@ -59,7 +59,7 @@ Configure the application using environment variables:
 
 ### Using a .env File
 
-Create a `.env` file in the PayrollIntelligence.Web directory:
+Create a `.env` file in the repository root directory:
 
 ```env
 PAYROLL_API_CLIENT_ID=your-client-id or empty
@@ -98,30 +98,26 @@ docker-compose up -d
 
 ## Usage
 
-### Interactive Mode
+### Running the Web Application
+
+From the repository root directory, run:
+
 ```bash
+dotnet run --project PayrollIntelligence.Web
+```
+
+Or navigate to the web project directory:
+
+```bash
+cd PayrollIntelligence.Web
 dotnet run
 ```
 
-This launches an interactive menu where you can select from the three analysis options.
-
-### Test Mode
-```bash
-dotnet run -- --test
-```
-
-Runs automated tests to verify all functionality is working correctly.
-
-### Demo Mode
-```bash
-dotnet run -- --demo
-```
-
-Runs a complete demonstration of all three payroll intelligence features with sample data.
+The web application will start and be available at `http://localhost:5000` (or the port specified in `launchSettings.json`).
 
 ### Interactive Web Interface
 
-The web application at `http://localhost:5000` provides a complete user interface with interactive modal dialogs for each analysis feature.
+The web application provides a complete user interface with interactive modal dialogs for each analysis feature.
 
 #### **User Experience Flow**
 
@@ -214,12 +210,20 @@ You can also use environment variables:
 ## Project Structure
 
 ```
-.
-├── PayrollIntelligence.Core/
-│   └── PayrollIntelligence.Core.csproj
-├── PayrollIntelligence.Web/
-│   └── PayrollIntelligence.Web.csproj
-├── PayrollIntelligence.sln
+PPC-Analytics/
+├── PayrollIntelligence.Core/       # Core business logic and services
+│   ├── Services/
+│   │   ├── PayrollComparisonService.cs
+│   │   ├── PayrollDifferencesService.cs
+│   │   └── PayrollAnomalyService.cs
+│   ├── PayrollModels.cs
+│   ├── PayrollApiService.cs
+│   ├── PayrollAnalysisService.cs
+│   └── ApiConfiguration.cs
+├── PayrollIntelligence.Web/        # ASP.NET Core Web Application
+│   ├── Controllers/
+│   ├── Views/
+│   └── wwwroot/
 ├── Dockerfile
 ├── docker-compose.yml
 └── README.md
@@ -256,9 +260,9 @@ dotnet run --project PayrollIntelligence.Web --urls=http://localhost:5000
 
 The application will be available at: **http://localhost:5000**
 
-## Demo Output
+## Analysis Output
 
-When you run the demo mode (`dotnet run -- --demo`), you'll see comprehensive analysis including:
+When you use the web interface to analyze payroll data, you'll see comprehensive analysis including:
 
 **Payroll Summary:**
 - Summary of changes between periods

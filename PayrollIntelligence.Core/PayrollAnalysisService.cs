@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
 using PayrollIntelligence.Core.Services;
 
@@ -38,27 +37,6 @@ public class PayrollAnalysisService
         _comparisonService = comparisonService;
         _differencesService = differencesService;
         _anomalyService = anomalyService;
-    }
-
-    /// <summary>
-    /// Loads payroll data from a local JSON file.
-    /// </summary>
-    public static PayrollData LoadPayrollData(string filePath)
-    {
-        var json = File.ReadAllText(filePath);
-        return JsonSerializer.Deserialize<PayrollData>(json, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        }) ?? throw new Exception("Failed to deserialize payroll data");
-    }
-
-    /// <summary>
-    /// Loads payroll data from the API.
-    /// </summary>
-    public async Task<PayrollData?> LoadPayrollDataFromApiAsync(int year, int month)
-    {
-        await EnsureAuthenticatedAsync();
-        return await _apiService!.GetPayrollDataAsync(year, month);
     }
 
     #region Payroll Summary

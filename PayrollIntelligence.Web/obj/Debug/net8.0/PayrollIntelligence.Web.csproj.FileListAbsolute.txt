@@ -16,6 +16,7 @@ D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.MvcApplicationPartsAssemblyInfo.cache
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.RazorAssemblyInfo.cache
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.RazorAssemblyInfo.cs
+D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.sourcelink.json
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\staticwebassets.build.json
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\staticwebassets.development.json
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\staticwebassets\msbuild.PayrollIntelligence.Web.Microsoft.AspNetCore.StaticWebAssets.props
@@ -32,4 +33,3 @@ D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.pdb
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.genruntimeconfig.cache
 D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\ref\PayrollIntelligence.Web.dll
-D:\OwnProjects\Hackathon\PPC-Analytics\PayrollIntelligence.Web\obj\Debug\net8.0\PayrollIntelligence.Web.sourcelink.json

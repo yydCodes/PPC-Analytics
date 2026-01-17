@@ -145,11 +145,6 @@ public class HomeController : Controller
         }
     }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
-
     [HttpGet]
     public IActionResult Settings()
     {
@@ -313,17 +308,6 @@ public class HomeController : Controller
             _logger.LogError(ex, "Error fetching draft months for year {Year}", year);
             return Json(new { success = false, message = $"Error: {ex.Message}" });
         }
-    }
-
-    /// <summary>
-    /// AJAX endpoint to get available years (2022 to current year)
-    /// </summary>
-    [HttpGet]
-    public IActionResult GetAvailableYears()
-    {
-        var currentYear = DateTime.Now.Year;
-        var years = Enumerable.Range(2022, currentYear - 2022 + 1).Reverse().ToList();
-        return Json(new { success = true, years });
     }
 
     /// <summary>
