@@ -11,9 +11,6 @@ A comprehensive web application for payroll analysis and intelligence gathering,
 ### Option 1: Using Docker Compose (Recommended)
 
 ```bash
-# Clone and navigate to the Analytics directory
-cd Analytics
-
 # Start the application
 docker-compose up -d
 
