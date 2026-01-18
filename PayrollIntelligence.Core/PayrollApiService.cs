@@ -250,7 +250,7 @@ public class PayrollApiService
             {
                 // Try parsing as object with items property
                 var result = JsonSerializer.Deserialize<PayrollYearResponse>(responseContent, options);
-                return result?.items ?? new List<PayrollYearItem>();
+                return result?.Items ?? new List<PayrollYearItem>();
             }
         }
         catch (Exception ex)
@@ -269,8 +269,8 @@ public class PayrollApiService
     {
         var payrolls = await GetPayrollsByYearAsync(year);
         return payrolls
-            .Where(p => p.status == 2)
-            .Select(p => p.month)
+            .Where(p => p.Status == 2)
+            .Select(p => p.Month)
             .OrderBy(m => m)
             .ToList();
     }
@@ -284,8 +284,8 @@ public class PayrollApiService
     {
         var payrolls = await GetPayrollsByYearAsync(year);
         return payrolls
-            .Where(p => p.status == 0)
-            .Select(p => p.month)
+            .Where(p => p.Status == 0)
+            .Select(p => p.Month)
             .OrderBy(m => m)
             .ToList();
     }
@@ -299,8 +299,8 @@ public class PayrollApiService
     public async Task<int> GetPayrollStatusAsync(int year, int month)
     {
         var payrolls = await GetPayrollsByYearAsync(year);
-        var payroll = payrolls.FirstOrDefault(p => p.month == month);
-        return payroll?.status ?? -1;
+        var payroll = payrolls.FirstOrDefault(p => p.Month == month);
+        return payroll?.Status ?? -1;
     }
 
     /// <summary>

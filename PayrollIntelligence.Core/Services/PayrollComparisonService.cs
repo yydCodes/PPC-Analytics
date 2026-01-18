@@ -64,16 +64,16 @@ public class PayrollComparisonService
         // ============================================
         // EXTRACT CORE METRICS (from totals)
         // ============================================
-        var prevNet = previous.totals?.net ?? 0;
-        var currNet = current.totals?.net ?? 0;
-        var prevGross = previous.totals?.gross ?? 0;
-        var currGross = current.totals?.gross ?? 0;
-        var prevCost = previous.totals?.cost ?? 0;
-        var currCost = current.totals?.cost ?? 0;
+        var prevNet = previous.Totals?.Net ?? 0;
+        var currNet = current.Totals?.Net ?? 0;
+        var prevGross = previous.Totals?.Gross ?? 0;
+        var currGross = current.Totals?.Gross ?? 0;
+        var prevCost = previous.Totals?.Cost ?? 0;
+        var currCost = current.Totals?.Cost ?? 0;
         
         // Use totalCount field, fallback to counting employeePayrolls
-        var prevCount = previous.totalCount > 0 ? previous.totalCount : (previous.employeePayrolls?.Count ?? 0);
-        var currCount = current.totalCount > 0 ? current.totalCount : (current.employeePayrolls?.Count ?? 0);
+        var prevCount = previous.TotalCount > 0 ? previous.TotalCount : (previous.EmployeePayrolls?.Count ?? 0);
+        var currCount = current.TotalCount > 0 ? current.TotalCount : (current.EmployeePayrolls?.Count ?? 0);
 
         // Calculate changes
         var costChange = currCost - prevCost;
@@ -239,26 +239,26 @@ public class PayrollComparisonService
 
         return new PayrollComparisonResult
         {
-            direction = direction,
-            headline_summary = headlineSummary,
-            key_drivers = keyDrivers.Take(5).ToList(),
-            notable_observations = notableObservations.Take(5).ToList(),
-            confidence_level = confidenceLevel,
-            previous_metrics = new PayrollMetrics
+            Direction = direction,
+            HeadlineSummary = headlineSummary,
+            KeyDrivers = keyDrivers.Take(5).ToList(),
+            NotableObservations = notableObservations.Take(5).ToList(),
+            ConfidenceLevel = confidenceLevel,
+            PreviousMetrics = new PayrollMetrics
             {
-                net_pay = prevNet,
-                gross_pay = prevGross,
-                employer_cost = prevCost,
-                headcount = prevCount,
-                period_name = previousPeriodName
+                NetPay = prevNet,
+                GrossPay = prevGross,
+                EmployerCost = prevCost,
+                Headcount = prevCount,
+                PeriodName = previousPeriodName
             },
-            current_metrics = new PayrollMetrics
+            CurrentMetrics = new PayrollMetrics
             {
-                net_pay = currNet,
-                gross_pay = currGross,
-                employer_cost = currCost,
-                headcount = currCount,
-                period_name = currentPeriodName
+                NetPay = currNet,
+                GrossPay = currGross,
+                EmployerCost = currCost,
+                Headcount = currCount,
+                PeriodName = currentPeriodName
             }
         };
     }
@@ -356,36 +356,36 @@ public class PayrollComparisonService
     /// </summary>
     private static EmployeeAnalysisResult AnalyzeEmployeePayrollItems(PayrollData previous, PayrollData current)
     {
-        var prevEmployees = previous.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var prevEmployees = previous.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
         
-        var currEmployees = current.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var currEmployees = current.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
 
         int higherGross = 0, lowerGross = 0;
         int stableBaseSalary = 0, changedBaseSalary = 0;
 
         foreach (var currEmp in currEmployees.Values)
         {
-            if (prevEmployees.TryGetValue(currEmp.employeeId!, out var prevEmp))
+            if (prevEmployees.TryGetValue(currEmp.EmployeeId!, out var prevEmp))
             {
                 // Compare gross from statutory contribution (totals)
-                var prevGross = prevEmp.statutoryContribution?.gross ?? 0;
-                var currGross = currEmp.statutoryContribution?.gross ?? 0;
+                var prevGross = prevEmp.StatutoryContribution?.Gross ?? 0;
+                var currGross = currEmp.StatutoryContribution?.Gross ?? 0;
 
                 if (currGross > prevGross + 10) higherGross++;
                 else if (currGross < prevGross - 10) lowerGross++;
 
                 // Analyze payrollItems[].amount for base salary stability
                 // Non-deduction items represent base earnings
-                var prevBaseAmount = prevEmp.payrollItems?
-                    .Where(p => !p.isDeduction)
-                    .Sum(p => p.amount ?? 0) ?? 0;
-                var currBaseAmount = currEmp.payrollItems?
-                    .Where(p => !p.isDeduction)
-                    .Sum(p => p.amount ?? 0) ?? 0;
+                var prevBaseAmount = prevEmp.PayrollItems?
+                    .Where(p => !p.IsDeduction)
+                    .Sum(p => p.Amount ?? 0) ?? 0;
+                var currBaseAmount = currEmp.PayrollItems?
+                    .Where(p => !p.IsDeduction)
+                    .Sum(p => p.Amount ?? 0) ?? 0;
 
                 if (Math.Abs(currBaseAmount - prevBaseAmount) < 10)
                     stableBaseSalary++;
@@ -415,24 +415,24 @@ public class PayrollComparisonService
     private static LeaveAnalysisResult AnalyzeLeaveData(PayrollData previous, PayrollData current)
     {
         // Analyze leave pay (leavePayPayrollItem)
-        var prevLeavePay = previous.employeePayrolls?.Sum(ep => ep.leavePayPayrollItem?.amount ?? 0) ?? 0;
-        var currLeavePay = current.employeePayrolls?.Sum(ep => ep.leavePayPayrollItem?.amount ?? 0) ?? 0;
+        var prevLeavePay = previous.EmployeePayrolls?.Sum(ep => ep.LeavePayPayrollItem?.Amount ?? 0) ?? 0;
+        var currLeavePay = current.EmployeePayrolls?.Sum(ep => ep.LeavePayPayrollItem?.Amount ?? 0) ?? 0;
         var leavePayChange = currLeavePay - prevLeavePay;
 
         // Count employees with leave pay in current period
-        var employeesWithLeavePay = current.employeePayrolls?
-            .Count(ep => ep.leavePayPayrollItem != null && ep.leavePayPayrollItem.amount > 0) ?? 0;
+        var employeesWithLeavePay = current.EmployeePayrolls?
+            .Count(ep => ep.LeavePayPayrollItem != null && ep.LeavePayPayrollItem.Amount > 0) ?? 0;
 
         // Analyze unpaid leave (unpaidLeavePayrollItems)
-        var prevUnpaidLeave = previous.employeePayrolls?
-            .Sum(ep => ep.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0) ?? 0;
-        var currUnpaidLeave = current.employeePayrolls?
-            .Sum(ep => ep.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0) ?? 0;
+        var prevUnpaidLeave = previous.EmployeePayrolls?
+            .Sum(ep => ep.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0) ?? 0;
+        var currUnpaidLeave = current.EmployeePayrolls?
+            .Sum(ep => ep.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0) ?? 0;
         var unpaidLeaveChange = currUnpaidLeave - prevUnpaidLeave;
 
         // Count employees with unpaid leave in current period
-        var employeesWithUnpaidLeave = current.employeePayrolls?
-            .Count(ep => ep.unpaidLeavePayrollItems != null && ep.unpaidLeavePayrollItems.Any(ul => ul.amount > 0)) ?? 0;
+        var employeesWithUnpaidLeave = current.EmployeePayrolls?
+            .Count(ep => ep.UnpaidLeavePayrollItems != null && ep.UnpaidLeavePayrollItems.Any(ul => ul.Amount > 0)) ?? 0;
 
         return new LeaveAnalysisResult
         {
@@ -450,12 +450,12 @@ public class PayrollComparisonService
     /// </summary>
     private static ErrorAnalysisResult AnalyzePayrollErrors(PayrollData previous, PayrollData current)
     {
-        var prevErrors = previous.employeePayrolls?
-            .Where(ep => ep.error != null && !string.IsNullOrEmpty(ep.error.message))
+        var prevErrors = previous.EmployeePayrolls?
+            .Where(ep => ep.Error != null && !string.IsNullOrEmpty(ep.Error.Message))
             .ToList() ?? new List<EmployeePayroll>();
 
-        var currErrors = current.employeePayrolls?
-            .Where(ep => ep.error != null && !string.IsNullOrEmpty(ep.error.message))
+        var currErrors = current.EmployeePayrolls?
+            .Where(ep => ep.Error != null && !string.IsNullOrEmpty(ep.Error.Message))
             .ToList() ?? new List<EmployeePayroll>();
 
         return new ErrorAnalysisResult
@@ -471,15 +471,15 @@ public class PayrollComparisonService
         ErrorAnalysisResult errorAnalysis)
     {
         // Check for data presence
-        var prevCount = previous.totalCount > 0 ? previous.totalCount : (previous.employeePayrolls?.Count ?? 0);
-        var currCount = current.totalCount > 0 ? current.totalCount : (current.employeePayrolls?.Count ?? 0);
+        var prevCount = previous.TotalCount > 0 ? previous.TotalCount : (previous.EmployeePayrolls?.Count ?? 0);
+        var currCount = current.TotalCount > 0 ? current.TotalCount : (current.EmployeePayrolls?.Count ?? 0);
 
         if (prevCount == 0 || currCount == 0)
             return "low";
 
         // Check for totals completeness
-        var prevHasTotals = previous.totals != null;
-        var currHasTotals = current.totals != null;
+        var prevHasTotals = previous.Totals != null;
+        var currHasTotals = current.Totals != null;
 
         if (!prevHasTotals || !currHasTotals)
             return "medium";

@@ -423,17 +423,17 @@ public class HomeController : Controller
 
             // Extract up to 3 key change themes (simple strings)
             var keyChanges = new List<string>();
-            foreach (var group in result.change_groups?.Take(3) ?? Enumerable.Empty<PayrollIntelligence.Core.ChangeGroup>())
+            foreach (var group in result.ChangeGroups?.Take(3) ?? Enumerable.Empty<PayrollIntelligence.Core.ChangeGroup>())
             {
-                var count = group.affected_employees?.Count ?? 0;
-                var theme = group.group_title switch
+                var count = group.AffectedEmployees?.Count ?? 0;
+                var theme = group.GroupTitle switch
                 {
                     var t when t?.Contains("Leave") == true => $"{count} employee(s) have leave-related pay adjustments",
                     var t when t?.Contains("New Employees") == true => $"{count} new team member(s) added this period",
                     var t when t?.Contains("Removed") == true => $"{count} employee(s) no longer on payroll",
                     var t when t?.Contains("Tax") == true => $"{count} employee(s) with updated deductions",
                     var t when t?.Contains("Gross") == true => $"{count} employee(s) with pay variations",
-                    _ => $"{count} employee(s) affected by {group.group_title?.ToLower() ?? "changes"}"
+                    _ => $"{count} employee(s) affected by {group.GroupTitle?.ToLower() ?? "changes"}"
                 };
                 keyChanges.Add(theme);
             }
@@ -441,31 +441,31 @@ public class HomeController : Controller
             // Build suggested review actions (simple strings, no automatic corrections)
             var suggestedActions = new List<string>();
 
-            if (result.attention_items?.Count > 0)
+            if (result.AttentionItems?.Count > 0)
             {
-                suggestedActions.Add($"Verify {result.attention_items.Count} flagged item(s) in Risk & Review");
+                suggestedActions.Add($"Verify {result.AttentionItems.Count} flagged item(s) in Risk & Review");
             }
 
-            var leaveGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Leave") == true);
-            if (leaveGroup?.affected_employees?.Count > 0)
+            var leaveGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Leave") == true);
+            if (leaveGroup?.AffectedEmployees?.Count > 0)
             {
                 suggestedActions.Add("Confirm leave records match HR documentation");
             }
 
-            var newHiresGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("New Employees") == true);
-            if (newHiresGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var newHiresGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("New Employees") == true);
+            if (newHiresGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Check new hire details against onboarding records");
             }
 
-            var removedGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Removed") == true);
-            if (removedGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var removedGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Removed") == true);
+            if (removedGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Ensure final payments were processed correctly");
             }
 
-            var taxGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Tax") == true);
-            if (taxGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var taxGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Tax") == true);
+            if (taxGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Review deduction changes for accuracy");
             }
@@ -481,9 +481,9 @@ public class HomeController : Controller
                 summary,
                 key_changes = keyChanges,
                 suggested_actions = suggestedActions,
-                confidence_level = result.confidence_level ?? "medium",
+                confidence_level = result.ConfidenceLevel ?? "medium",
                 // Additional context for UI (not repeated in detail sections)
-                attentionCount = result.attention_items?.Count ?? 0
+                attentionCount = result.AttentionItems?.Count ?? 0
             });
         }
         catch (Exception ex)
@@ -509,15 +509,15 @@ public class HomeController : Controller
     /// </summary>
     private static string BuildConciseSummary(PayrollIntelligence.Core.KeyDifferencesResult result)
     {
-        var overview = result.payroll_overview;
+        var overview = result.PayrollOverview;
         if (overview == null)
         {
             return "Payroll analysis complete - see details below.";
         }
 
         // Determine overall direction from employer cost trend
-        var costTrend = overview.employer_cost_trend?.ToLower() ?? "";
-        var headcount = overview.headcount_change?.ToLower() ?? "";
+        var costTrend = overview.EmployerCostTrend?.ToLower() ?? "";
+        var headcount = overview.HeadcountChange?.ToLower() ?? "";
 
         var direction = costTrend switch
         {
@@ -535,8 +535,8 @@ public class HomeController : Controller
             _ => ""
         };
 
-        var changeCount = result.change_groups?.Count ?? 0;
-        var attentionCount = result.attention_items?.Count ?? 0;
+        var changeCount = result.ChangeGroups?.Count ?? 0;
+        var attentionCount = result.AttentionItems?.Count ?? 0;
 
         if (attentionCount > 0)
         {

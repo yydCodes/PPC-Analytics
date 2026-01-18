@@ -21,11 +21,11 @@ public class PayrollAnomalyServiceTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert
-        Assert.NotNull(result.anomalies);
-        var costAnomaly = result.anomalies.FirstOrDefault(a => 
-            a.severity == "high" && 
-            (a.explanation?.Contains("cost", StringComparison.OrdinalIgnoreCase) == true ||
-             a.title?.Contains("cost", StringComparison.OrdinalIgnoreCase) == true));
+        Assert.NotNull(result.Anomalies);
+        var costAnomaly = result.Anomalies.FirstOrDefault(a => 
+            a.Severity == AnomalySeverity.High && 
+            (a.Explanation?.Contains("cost", StringComparison.OrdinalIgnoreCase) == true ||
+             a.Title?.Contains("cost", StringComparison.OrdinalIgnoreCase) == true));
         Assert.NotNull(costAnomaly);
     }
 
@@ -37,13 +37,13 @@ public class PayrollAnomalyServiceTests
         var current = TestDataHelper.CreateSamplePayrollData(3);
         
         // Modify first employee's gross pay significantly
-        if (current.employeePayrolls?.Count > 0 && previous.employeePayrolls?.Count > 0)
+        if (current.EmployeePayrolls?.Count > 0 && previous.EmployeePayrolls?.Count > 0)
         {
-            var prevGross = previous.employeePayrolls[0].statutoryContribution?.gross ?? 0;
-            var currEmp = current.employeePayrolls[0];
-            if (currEmp.statutoryContribution != null)
+            var prevGross = previous.EmployeePayrolls[0].StatutoryContribution?.Gross ?? 0;
+            var currEmp = current.EmployeePayrolls[0];
+            if (currEmp.StatutoryContribution != null)
             {
-                currEmp.statutoryContribution.gross = prevGross * 2.5m; // 150% increase
+                currEmp.StatutoryContribution.Gross = prevGross * 2.5m; // 150% increase
             }
         }
 
@@ -51,15 +51,15 @@ public class PayrollAnomalyServiceTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert
-        Assert.NotNull(result.anomalies);
+        Assert.NotNull(result.Anomalies);
         // Anomaly detection may flag this as high severity or in cost category
-        var significantAnomaly = result.anomalies.FirstOrDefault(a => 
-            a.severity == "high" ||
-            (a.explanation?.Contains("gross", StringComparison.OrdinalIgnoreCase) == true ||
-             a.title?.Contains("gross", StringComparison.OrdinalIgnoreCase) == true ||
-             a.title?.Contains("pay", StringComparison.OrdinalIgnoreCase) == true));
+        var significantAnomaly = result.Anomalies.FirstOrDefault(a => 
+            a.Severity == AnomalySeverity.High ||
+            (a.Explanation?.Contains("gross", StringComparison.OrdinalIgnoreCase) == true ||
+             a.Title?.Contains("gross", StringComparison.OrdinalIgnoreCase) == true ||
+             a.Title?.Contains("pay", StringComparison.OrdinalIgnoreCase) == true));
         // May or may not detect depending on thresholds - test passes if any anomalies found
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Summary);
     }
 
     [Fact]
@@ -73,11 +73,11 @@ public class PayrollAnomalyServiceTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert
-        Assert.NotNull(result.anomalies);
-        var zeroPayAnomaly = result.anomalies.FirstOrDefault(a => 
-            (a.explanation?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true ||
-             a.title?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true) ||
-            a.severity == "high");
+        Assert.NotNull(result.Anomalies);
+        var zeroPayAnomaly = result.Anomalies.FirstOrDefault(a => 
+            (a.Explanation?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true ||
+             a.Title?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true) ||
+            a.Severity == AnomalySeverity.High);
         Assert.NotNull(zeroPayAnomaly);
     }
 
@@ -93,8 +93,8 @@ public class PayrollAnomalyServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
         // Note: PayrollAnomalyService focuses on data inconsistencies, not error messages
         // This test verifies the service handles payroll data with errors gracefully
     }
@@ -110,9 +110,9 @@ public class PayrollAnomalyServiceTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert
-        Assert.NotNull(result.anomalies);
+        Assert.NotNull(result.Anomalies);
         // Small changes should not trigger anomalies
-        var highSeverityAnomalies = result.anomalies.Where(a => a.severity == "high").ToList();
+        var highSeverityAnomalies = result.Anomalies.Where(a => a.Severity == AnomalySeverity.High).ToList();
         Assert.Empty(highSeverityAnomalies);
     }
 
@@ -137,13 +137,13 @@ public class PayrollAnomalyServiceTests
         // Arrange
         var previous = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
         var current = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
 
         // Act
@@ -151,8 +151,8 @@ public class PayrollAnomalyServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
     }
 
     [Fact]
@@ -167,9 +167,9 @@ public class PayrollAnomalyServiceTests
 
         // Assert
         // New employees are expected changes, not anomalies
-        var newEmployeeAnomalies = result.anomalies.Where(a => 
-            (a.explanation?.Contains("new employee", StringComparison.OrdinalIgnoreCase) == true ||
-             a.title?.Contains("new employee", StringComparison.OrdinalIgnoreCase) == true)).ToList();
+        var newEmployeeAnomalies = result.Anomalies.Where(a => 
+            (a.Explanation?.Contains("new employee", StringComparison.OrdinalIgnoreCase) == true ||
+             a.Title?.Contains("new employee", StringComparison.OrdinalIgnoreCase) == true)).ToList();
         Assert.Empty(newEmployeeAnomalies);
     }
 }

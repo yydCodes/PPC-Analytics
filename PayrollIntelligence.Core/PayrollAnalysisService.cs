@@ -137,8 +137,8 @@ public class PayrollAnalysisService
         {
             return new AnomalyDetectionResult 
             { 
-                anomalies = new List<Anomaly>(),
-                summary = "No historical data available for comparison."
+                Anomalies = new List<Anomaly>(),
+                Summary = "No historical data available for comparison."
             };
         }
 
