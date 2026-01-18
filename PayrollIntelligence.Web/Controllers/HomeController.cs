@@ -192,6 +192,9 @@ public class HomeController : Controller
             _apiConfig.Value.ClientId = clientId;
             _apiConfig.Value.ClientSecret = clientSecret;
 
+            // Clear any existing authentication token since credentials have changed
+            _apiService.ClearAuthentication();
+
             // Attempt to authenticate with new credentials and capture logs
             var authLog = await _apiService.AuthenticateAsyncWithLogs(clientId, clientSecret);
 
