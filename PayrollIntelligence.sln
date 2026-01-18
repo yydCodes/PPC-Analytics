@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PayrollIntelligence.Web", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PayrollIntelligence.Core", "PayrollIntelligence.Core\PayrollIntelligence.Core.csproj", "{163F6F89-FE5E-46D3-93C3-564601679C2A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PayrollIntelligence.Tests", "PayrollIntelligence.Tests\PayrollIntelligence.Tests.csproj", "{A9C4852E-CE00-4F16-A6F9-CEB1E898BD4A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,5 +21,9 @@ Global
 		{163F6F89-FE5E-46D3-93C3-564601679C2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{163F6F89-FE5E-46D3-93C3-564601679C2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{163F6F89-FE5E-46D3-93C3-564601679C2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9C4852E-CE00-4F16-A6F9-CEB1E898BD4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9C4852E-CE00-4F16-A6F9-CEB1E898BD4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9C4852E-CE00-4F16-A6F9-CEB1E898BD4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9C4852E-CE00-4F16-A6F9-CEB1E898BD4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
