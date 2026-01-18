@@ -5,16 +5,187 @@ namespace PayrollIntelligence.Core.Services;
 /// <summary>
 /// Service for Risk & Review feature.
 /// Detects unusual, risky, or inconsistent changes in payroll data.
+/// Uses AI reasoning if available, otherwise falls back to rule-based detection.
 /// </summary>
 public class PayrollAnomalyService
 {
     private readonly PayrollApiService _apiService;
     private readonly ApiConfiguration _apiConfig;
+    private readonly AiReasoningService? _aiService;
 
-    public PayrollAnomalyService(PayrollApiService apiService, IOptions<ApiConfiguration> apiConfig)
+    public PayrollAnomalyService(
+        PayrollApiService apiService, 
+        IOptions<ApiConfiguration> apiConfig,
+        AiReasoningService? aiService = null)
     {
         _apiService = apiService;
         _apiConfig = apiConfig.Value;
+        _aiService = aiService;
+    }
+
+    // ... existing DetectAnomaliesAsync method ...
+
+    /// <summary>
+    /// Detects anomalies by comparing current payroll against a previous period.
+    /// Uses AI if available, otherwise falls back to rule-based detection.
+    /// </summary>
+    public async Task<AnomalyDetectionResult> DetectAnomaliesAsync(PayrollData previous, PayrollData current)
+    {
+        // Check if AI service is available and valid
+        if (IsAiAvailable())
+        {
+            try
+            {
+                // Build context from payroll data for AI analysis
+                var context = BuildAnomalyContextFromData(previous, current);
+                
+                // Get AI review items
+                var aiReview = await _aiService!.GenerateAnomalyReviewItemsAsync(context);
+                
+                if (aiReview != null && aiReview.ReviewItems != null && aiReview.ReviewItems.Count > 0)
+                {
+                    // Convert AI review items to Anomaly format
+                    var aiAnomalies = aiReview.ReviewItems.Select(item => new Anomaly
+                    {
+                        category = "AI Review",
+                        severity = item.Severity ?? "medium",
+                        scope = item.Scope ?? "employee",
+                        reference = item.Reference ?? "",
+                        title = item.Title ?? "",
+                        explanation = item.Explanation ?? "",
+                        review_suggestion = item.ReviewSuggestion ?? ""
+                    }).ToList();
+
+                    // Generate summary
+                    var summary = !string.IsNullOrWhiteSpace(aiReview.OverallAssessment)
+                        ? aiReview.OverallAssessment
+                        : GenerateSummary(aiAnomalies);
+
+                    return new AnomalyDetectionResult
+                    {
+                        anomalies = aiAnomalies,
+                        summary = summary,
+                        ai_insight = aiReview.OverallAssessment
+                    };
+                }
+            }
+            catch
+            {
+                // If AI fails, fall through to rule-based
+            }
+        }
+        
+        // Fallback to rule-based detection
+        Console.WriteLine("Falling back to rule-based detection");
+        return DetectAnomalies(previous, current);
+    }
+
+    /// <summary>
+    /// Checks if AI service is available and properly configured.
+    /// </summary>
+    private bool IsAiAvailable()
+    {
+        return _aiService != null;
+    }
+
+    /// <summary>
+    /// Builds context from payroll data (not from detected anomalies) for AI analysis.
+    /// </summary>
+    private string BuildAnomalyContextFromData(PayrollData previous, PayrollData current)
+    {
+        var context = new System.Text.StringBuilder();
+        context.AppendLine("Payroll Data Comparison:");
+        context.AppendLine();
+
+        // Add summary statistics
+        var prevTotal = previous.totals;
+        var currTotal = current.totals;
+        if (prevTotal != null && currTotal != null)
+        {
+            context.AppendLine("Payroll Summary:");
+            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+            context.AppendLine();
+        }
+
+        // Add employee-level changes that might indicate anomalies
+        var prevEmployees = previous.employeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.employeeId))
+            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+
+        foreach (var currEmp in current.employeePayrolls ?? new List<EmployeePayroll>())
+        {
+            var empName = currEmp.employeeName ?? currEmp.employeeNumber ?? "Unknown";
+            var empId = currEmp.employeeId ?? "";
+
+            if (string.IsNullOrEmpty(empId) || !prevEmployees.TryGetValue(empId, out var prevEmp))
+                continue;
+
+            var changes = new List<string>();
+
+            // Net pay vs salary consistency
+            var prevNet = prevEmp.statutoryContribution?.net ?? 0;
+            var currNet = currEmp.statutoryContribution?.net ?? 0;
+            var prevBaseSalary = prevEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+            var currBaseSalary = currEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+
+            if (Math.Abs(currNet - prevNet) > 50 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
+            {
+                changes.Add($"Net pay changed by {Math.Abs(currNet - prevNet):N2} without base salary change");
+            }
+
+            // Leave changes
+            var prevUnpaid = prevEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
+            var currUnpaid = currEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
+            if (Math.Abs(prevUnpaid - currUnpaid) > 10)
+            {
+                changes.Add($"Unpaid leave changed from {prevUnpaid:N2} to {currUnpaid:N2}");
+            }
+
+            // Statutory changes
+            var prevMtd = prevEmp.statutoryContribution?.employeeMtd ?? 0;
+            var currMtd = currEmp.statutoryContribution?.employeeMtd ?? 0;
+            if (Math.Abs(currMtd - prevMtd) > 100)
+            {
+                changes.Add($"Tax deduction (MTD) changed by {Math.Abs(currMtd - prevMtd):N2}");
+            }
+
+            if (changes.Count > 0)
+            {
+                context.AppendLine($"- {empName}: {string.Join("; ", changes)}");
+            }
+        }
+
+        return context.ToString();
+    }
+
+    private string BuildAnomalyContext(List<Anomaly> anomalies, PayrollData previous, PayrollData current)
+    {
+        var context = new System.Text.StringBuilder();
+        context.AppendLine("Payroll Risk Signals Detected:");
+        context.AppendLine();
+
+        foreach (var anomaly in anomalies)
+        {
+            context.AppendLine($"- [{anomaly.severity.ToUpper()}] {anomaly.scope}: {anomaly.reference}");
+            context.AppendLine($"  Issue: {anomaly.title}");
+            context.AppendLine($"  Details: {anomaly.explanation}");
+            context.AppendLine();
+        }
+
+        // Add summary statistics
+        var prevTotal = previous.totals;
+        var currTotal = current.totals;
+        if (prevTotal != null && currTotal != null)
+        {
+            context.AppendLine("Payroll Summary:");
+            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+        }
+
+        return context.ToString();
     }
 
     /// <summary>
@@ -62,7 +233,7 @@ public class PayrollAnomalyService
             throw new InvalidOperationException("Failed to retrieve draft payroll data from API");
         }
 
-        return DetectAnomalies(comparison, draft);
+        return await DetectAnomaliesAsync(comparison, draft);
     }
 
     /// <summary>

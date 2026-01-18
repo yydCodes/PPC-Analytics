@@ -192,6 +192,9 @@ public class HomeController : Controller
             _apiConfig.Value.ClientId = clientId;
             _apiConfig.Value.ClientSecret = clientSecret;
 
+            // Clear any existing authentication token since credentials have changed
+            _apiService.ClearAuthentication();
+
             // Attempt to authenticate with new credentials and capture logs
             var authLog = await _apiService.AuthenticateAsyncWithLogs(clientId, clientSecret);
 
@@ -421,21 +424,67 @@ public class HomeController : Controller
             // Build concise one-sentence summary (avoid technical terms)
             var summary = BuildConciseSummary(result);
 
-            // Extract up to 3 key change themes (simple strings)
+            // Extract up to 3 key change themes (simple strings) - consolidate similar themes and count unique employees
             var keyChanges = new List<string>();
-            foreach (var group in result.change_groups?.Take(3) ?? Enumerable.Empty<PayrollIntelligence.Core.ChangeGroup>())
+            
+            if (result.change_groups != null && result.change_groups.Count > 0)
             {
-                var count = group.affected_employees?.Count ?? 0;
-                var theme = group.group_title switch
+                // Group change groups by theme type and collect unique employees
+                var themeGroups = new Dictionary<string, HashSet<string>>();
+                
+                foreach (var group in result.change_groups)
                 {
-                    var t when t?.Contains("Leave") == true => $"{count} employee(s) have leave-related pay adjustments",
-                    var t when t?.Contains("New Employees") == true => $"{count} new team member(s) added this period",
-                    var t when t?.Contains("Removed") == true => $"{count} employee(s) no longer on payroll",
-                    var t when t?.Contains("Tax") == true => $"{count} employee(s) with updated deductions",
-                    var t when t?.Contains("Gross") == true => $"{count} employee(s) with pay variations",
-                    _ => $"{count} employee(s) affected by {group.group_title?.ToLower() ?? "changes"}"
-                };
-                keyChanges.Add(theme);
+                    if (group.affected_employees == null || group.affected_employees.Count == 0)
+                        continue;
+                    
+                    // Determine theme type
+                    string themeType;
+                    if (group.group_title?.Contains("Leave") == true)
+                        themeType = "Leave";
+                    else if (group.group_title?.Contains("New Employees") == true)
+                        themeType = "New Employees";
+                    else if (group.group_title?.Contains("Removed") == true)
+                        themeType = "Removed";
+                    else if (group.group_title?.Contains("Tax") == true)
+                        themeType = "Tax";
+                    else if (group.group_title?.Contains("Gross") == true)
+                        themeType = "Gross";
+                    else
+                        themeType = group.group_title ?? "Other";
+                    
+                    // Add unique employees to the theme group (HashSet automatically handles duplicates)
+                    if (!themeGroups.ContainsKey(themeType))
+                    {
+                        themeGroups[themeType] = new HashSet<string>();
+                    }
+                    
+                    foreach (var employee in group.affected_employees)
+                    {
+                        if (!string.IsNullOrWhiteSpace(employee))
+                        {
+                            themeGroups[themeType].Add(employee);
+                        }
+                    }
+                }
+                
+                // Generate consolidated messages for each theme (up to 3) using unique employee counts
+                foreach (var kvp in themeGroups.Take(3))
+                {
+                    var themeType = kvp.Key;
+                    var uniqueCount = kvp.Value.Count; // This is the unique count, not the sum
+                    
+                    var message = themeType switch
+                    {
+                        "Leave" => $"{uniqueCount} employee(s) have leave-related pay adjustments",
+                        "New Employees" => $"{uniqueCount} new team member(s) added this period",
+                        "Removed" => $"{uniqueCount} employee(s) no longer on payroll",
+                        "Tax" => $"{uniqueCount} employee(s) with updated deductions",
+                        "Gross" => $"{uniqueCount} employee(s) with pay variations",
+                        _ => $"{uniqueCount} employee(s) affected by {themeType.ToLower()}"
+                    };
+                    
+                    keyChanges.Add(message);
+                }
             }
 
             // Build suggested review actions (simple strings, no automatic corrections)

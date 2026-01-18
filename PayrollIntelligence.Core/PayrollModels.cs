@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PayrollIntelligence.Core;
 
@@ -149,6 +150,8 @@ public class PayrollComparisonResult
     /// </summary>
     public PayrollMetrics? previous_metrics { get; set; }
     public PayrollMetrics? current_metrics { get; set; }
+
+    public string? ai_insight { get; set; }  // AI-generated deeper insight
 }
 
 public class PayrollMetrics
@@ -202,6 +205,41 @@ public class KeyDifferencesResult
     public List<ChangeGroup> change_groups { get; set; } = new();
     public List<AttentionItem> attention_items { get; set; } = new();
     public string confidence_level { get; set; } = "";
+    
+    public string? ai_insight { get; set; }  // AI-generated insight about changes
+}
+
+public class AnomalyReviewResponse
+{
+    [JsonPropertyName("review_items")]
+    public List<AnomalyReviewItem>? ReviewItems { get; set; }
+
+    [JsonPropertyName("overall_assessment")]
+    public string? OverallAssessment { get; set; }
+}
+
+public class AnomalyReviewItem
+{
+    [JsonPropertyName("scope")]
+    public string? Scope { get; set; }
+
+    [JsonPropertyName("reference")]
+    public string? Reference { get; set; }
+
+    [JsonPropertyName("severity")]
+    public string? Severity { get; set; }
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("explanation")]
+    public string? Explanation { get; set; }
+
+    [JsonPropertyName("review_suggestion")]
+    public string? ReviewSuggestion { get; set; }
+
+    [JsonPropertyName("confidence_level")]
+    public string? ConfidenceLevel { get; set; }
 }
 
 public class Anomaly
@@ -219,6 +257,8 @@ public class AnomalyDetectionResult
 {
     public List<Anomaly> anomalies { get; set; } = new();
     public string summary { get; set; } = "";            // Overall summary of findings
+
+    public string? ai_insight { get; set; }  // AI-generated risk assessment
 }
 
 // API response for GetPayrolls/:year endpoint

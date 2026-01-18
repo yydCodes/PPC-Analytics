@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using PayrollIntelligence.Core;
 using PayrollIntelligence.Core.Services;
 
@@ -13,10 +14,40 @@ builder.Services.Configure<ApiConfiguration>(
 // Register HTTP client and API service
 builder.Services.AddHttpClient<PayrollApiService>();
 
-// Register individual feature services
-builder.Services.AddScoped<PayrollComparisonService>();
-builder.Services.AddScoped<PayrollDifferencesService>();
-builder.Services.AddScoped<PayrollAnomalyService>();
+// Add AI configuration
+builder.Services.Configure<AiConfiguration>(
+    builder.Configuration.GetSection("AiService"));
+
+// Register AI service (optional - will be null if not configured)
+builder.Services.AddHttpClient<AiReasoningService>();
+builder.Services.AddScoped<AiReasoningService>();
+
+// Update service registrations to inject AI service
+builder.Services.AddScoped<PayrollComparisonService>(sp =>
+{
+    var apiService = sp.GetRequiredService<PayrollApiService>();
+    var apiConfig = sp.GetRequiredService<IOptions<ApiConfiguration>>();
+    var aiService = sp.GetService<AiReasoningService>();
+    return new PayrollComparisonService(apiService, apiConfig, aiService);
+});
+
+// Register individual feature services with AI support
+builder.Services.AddScoped<PayrollDifferencesService>(sp =>
+{
+    var apiService = sp.GetRequiredService<PayrollApiService>();
+    var apiConfig = sp.GetRequiredService<IOptions<ApiConfiguration>>();
+    var aiService = sp.GetService<AiReasoningService>();
+    return new PayrollDifferencesService(apiService, apiConfig, aiService);
+});
+
+// Register individual feature services with AI support
+builder.Services.AddScoped<PayrollAnomalyService>(sp =>
+{
+    var apiService = sp.GetRequiredService<PayrollApiService>();
+    var apiConfig = sp.GetRequiredService<IOptions<ApiConfiguration>>();
+    var aiService = sp.GetService<AiReasoningService>();
+    return new PayrollAnomalyService(apiService, apiConfig, aiService);
+});
 
 // Register the facade service (uses the individual services)
 builder.Services.AddScoped<PayrollAnalysisService>();

@@ -1,20 +1,27 @@
 using Microsoft.Extensions.Options;
+using PayrollIntelligence.Core;
 
 namespace PayrollIntelligence.Core.Services;
 
 /// <summary>
 /// Service for Detailed Changes feature.
 /// Identifies meaningful differences between two payroll periods.
+/// Uses AI reasoning if available, otherwise falls back to rule-based analysis.
 /// </summary>
 public class PayrollDifferencesService
 {
     private readonly PayrollApiService _apiService;
     private readonly ApiConfiguration _apiConfig;
+    private readonly AiReasoningService? _aiService;
 
-    public PayrollDifferencesService(PayrollApiService apiService, IOptions<ApiConfiguration> apiConfig)
+    public PayrollDifferencesService(
+        PayrollApiService apiService, 
+        IOptions<ApiConfiguration> apiConfig,
+        AiReasoningService? aiService = null)  // Optional AI service
     {
         _apiService = apiService;
         _apiConfig = apiConfig.Value;
+        _aiService = aiService;
     }
 
     /// <summary>
@@ -34,8 +41,172 @@ public class PayrollDifferencesService
             throw new InvalidOperationException("Failed to retrieve payroll data from API");
         }
 
+        return await AnalyzeKeyDifferencesWithConditionalAIAsync(previous, current);
+    }
+
+    /// <summary>
+    /// Analyzes key differences with conditional AI or rule-based reasoning.
+    /// Uses AI if available, otherwise falls back to rule-based analysis.
+    /// </summary>
+    private async Task<KeyDifferencesResult> AnalyzeKeyDifferencesWithConditionalAIAsync(PayrollData previous, PayrollData current)
+    {
+        // Check if AI service is available and valid
+        if (IsAiAvailable())
+        {
+            try
+            {
+                // Build context with employee-level change facts
+                var context = BuildEmployeeChangeContext(previous, current);
+                
+                // Use AI reasoning for change groups
+                var aiChangeGroups = await _aiService!.GenerateChangeGroupsAsync(context);
+                
+                if (aiChangeGroups != null && aiChangeGroups.Count > 0)
+                {
+                    // Build result with AI-generated change groups
+                    // But keep rule-based attention items and overview (not covered by AI)
+                    return BuildResultWithAiChangeGroups(previous, current, aiChangeGroups);
+                }
+            }
+            catch
+            {
+                // If AI fails, fall through to rule-based
+            }
+        }
+        
+        // Fallback to rule-based analysis
+        Console.WriteLine("Falling back to rule-based analysis");
         return AnalyzeKeyDifferences(previous, current);
     }
+
+    /// <summary>
+    /// Checks if AI service is available and properly configured.
+    /// </summary>
+    private bool IsAiAvailable()
+    {
+        return _aiService != null;
+    }
+
+    /// <summary>
+    /// Builds a result using AI-generated change groups, with rule-based attention items and overview.
+    /// </summary>
+    private static KeyDifferencesResult BuildResultWithAiChangeGroups(
+        PayrollData previous, 
+        PayrollData current, 
+        List<ChangeGroup> aiChangeGroups)
+    {
+        var result = new KeyDifferencesResult();
+        
+        // Use AI-generated change groups
+        result.change_groups = aiChangeGroups;
+        
+        // Still use rule-based for attention items and overview (not covered by AI)
+        var ruleBasedResult = AnalyzeKeyDifferences(previous, current);
+        result.attention_items = ruleBasedResult.attention_items;
+        result.payroll_overview = ruleBasedResult.payroll_overview;
+        result.confidence_level = ruleBasedResult.confidence_level;
+        result.key_differences = ruleBasedResult.key_differences;
+        
+        return result;
+    }
+
+    /// <summary>
+    /// Builds a context string with employee-level change facts for AI analysis.
+    /// </summary>
+    private static string BuildEmployeeChangeContext(PayrollData previous, PayrollData current)
+    {
+        var context = new System.Text.StringBuilder();
+        
+        context.AppendLine("Employee-level payroll change facts:");
+        context.AppendLine();
+
+        var prevEmployees = previous.employeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.employeeId))
+            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+
+        var currEmployees = current.employeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.employeeId))
+            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+
+        // List all employees with changes
+        foreach (var currEmp in current.employeePayrolls ?? new List<EmployeePayroll>())
+        {
+            var empName = currEmp.employeeName ?? currEmp.employeeNumber ?? "Unknown";
+            var empId = currEmp.employeeId ?? "";
+
+            if (string.IsNullOrEmpty(empId)) continue;
+
+            // Check if new employee
+            if (!prevEmployees.ContainsKey(empId))
+            {
+                context.AppendLine($"- {empName}: New employee added to payroll");
+                continue;
+            }
+
+            var prevEmp = prevEmployees[empId];
+            var changes = new List<string>();
+
+            // Gross pay change
+            var prevGross = prevEmp.statutoryContribution?.gross ?? 0;
+            var currGross = currEmp.statutoryContribution?.gross ?? 0;
+            var grossDiff = currGross - prevGross;
+            if (Math.Abs(grossDiff) > 10)
+            {
+                changes.Add($"Gross pay changed from {prevGross:N2} to {currGross:N2} (difference: {grossDiff:+#;-#;0})");
+            }
+
+            // Net pay change
+            var prevNet = prevEmp.statutoryContribution?.net ?? 0;
+            var currNet = currEmp.statutoryContribution?.net ?? 0;
+            var netDiff = currNet - prevNet;
+            if (Math.Abs(netDiff) > 10)
+            {
+                changes.Add($"Net pay changed from {prevNet:N2} to {currNet:N2} (difference: {netDiff:+#;-#;0})");
+            }
+
+            // Leave changes
+            var prevLeavePay = prevEmp.leavePayPayrollItem?.amount ?? 0;
+            var currLeavePay = currEmp.leavePayPayrollItem?.amount ?? 0;
+            if (Math.Abs(prevLeavePay - currLeavePay) > 10)
+            {
+                changes.Add($"Leave pay changed from {prevLeavePay:N2} to {currLeavePay:N2}");
+            }
+
+            var prevUnpaid = prevEmp.unpaidLeavePayrollItems?.Sum(u => u.amount) ?? 0;
+            var currUnpaid = currEmp.unpaidLeavePayrollItems?.Sum(u => u.amount) ?? 0;
+            if (Math.Abs(prevUnpaid - currUnpaid) > 10)
+            {
+                changes.Add($"Unpaid leave deduction changed from {prevUnpaid:N2} to {currUnpaid:N2}");
+            }
+
+            // MTD changes
+            var prevMtd = prevEmp.statutoryContribution?.employeeMtd ?? 0;
+            var currMtd = currEmp.statutoryContribution?.employeeMtd ?? 0;
+            if (Math.Abs(currMtd - prevMtd) > 50)
+            {
+                changes.Add($"Tax deduction (MTD) changed from {prevMtd:N2} to {currMtd:N2}");
+            }
+
+            if (changes.Count > 0)
+            {
+                context.AppendLine($"- {empName}: {string.Join("; ", changes)}");
+            }
+        }
+
+        // List removed employees
+        foreach (var prevEmpId in prevEmployees.Keys)
+        {
+            if (!currEmployees.ContainsKey(prevEmpId))
+            {
+                var prevEmp = prevEmployees[prevEmpId];
+                var empName = prevEmp.employeeName ?? prevEmp.employeeNumber ?? "Unknown";
+                context.AppendLine($"- {empName}: Removed from payroll");
+            }
+        }
+
+        return context.ToString();
+    }
+
 
     /// <summary>
     /// Analyzes key differences between two payroll periods with detailed grouping.
