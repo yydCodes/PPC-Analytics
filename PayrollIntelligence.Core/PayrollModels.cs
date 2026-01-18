@@ -235,6 +235,9 @@ public class AnomalyReviewItem
     [JsonPropertyName("explanation")]
     public string? Explanation { get; set; }
 
+    [JsonPropertyName("review_suggestion")]
+    public string? ReviewSuggestion { get; set; }
+
     [JsonPropertyName("confidence_level")]
     public string? ConfidenceLevel { get; set; }
 }

@@ -53,7 +53,7 @@ public class PayrollAnomalyService
                         reference = item.Reference ?? "",
                         title = item.Title ?? "",
                         explanation = item.Explanation ?? "",
-                        review_suggestion = $"Confidence: {item.ConfidenceLevel ?? "medium"}"
+                        review_suggestion = item.ReviewSuggestion ?? ""
                     }).ToList();
 
                     // Generate summary

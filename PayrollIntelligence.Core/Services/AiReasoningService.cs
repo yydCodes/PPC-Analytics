@@ -125,7 +125,7 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
                 group_title = cg.Title ?? "",
                 description = cg.Description ?? "",
                 affected_employees = cg.AffectedEmployees ?? new List<string>(),
-                why_it_matters = "" // AI doesn't provide this field
+                why_it_matters = cg.WhyItMatters ?? ""
             }).ToList();
         }
         catch
@@ -150,6 +150,9 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
         
         [JsonPropertyName("affected_employees")]
         public List<string>? AffectedEmployees { get; set; }
+        
+        [JsonPropertyName("why_it_matters")]
+        public string? WhyItMatters { get; set; }
         
         [JsonPropertyName("confidence_level")]
         public string? ConfidenceLevel { get; set; }
