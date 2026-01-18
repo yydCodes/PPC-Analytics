@@ -11,6 +11,7 @@ WORKDIR /src
 COPY PayrollIntelligence.sln .
 COPY PayrollIntelligence.Core/PayrollIntelligence.Core.csproj PayrollIntelligence.Core/
 COPY PayrollIntelligence.Web/PayrollIntelligence.Web.csproj PayrollIntelligence.Web/
+COPY PayrollIntelligence.Tests/PayrollIntelligence.Tests.csproj PayrollIntelligence.Tests/
 
 # Restore dependencies
 RUN dotnet restore
@@ -36,7 +37,7 @@ WORKDIR /app
 
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:80
-ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser
