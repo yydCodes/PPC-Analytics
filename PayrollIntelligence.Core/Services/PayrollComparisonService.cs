@@ -52,14 +52,14 @@ public class PayrollComparisonService
         var previousPeriodName = $"{GetMonthName(previousMonth)} {previousYear}";
         var currentPeriodName = $"{GetMonthName(currentMonth)} {currentYear}";
 
-        return await ComparePeriodsWithConditionalAIAsync(previous, current, previousPeriodName, currentPeriodName);
+        return await ComparePeriodsWithConditionalAiAsync(previous, current, previousPeriodName, currentPeriodName);
     }
 
     /// <summary>
     /// Compares payroll periods with conditional AI or rule-based reasoning.
     /// Uses AI if available, otherwise falls back to rule-based analysis.
     /// </summary>
-    private async Task<PayrollComparisonResult> ComparePeriodsWithConditionalAIAsync(
+    private async Task<PayrollComparisonResult> ComparePeriodsWithConditionalAiAsync(
         PayrollData previous, 
         PayrollData current,
         string previousPeriodName,
@@ -228,14 +228,9 @@ public class PayrollComparisonService
         // 1. Headcount impact
         if (headcountChange != 0)
         {
-            if (headcountChange > 0)
-            {
-                keyDrivers.Add($"Headcount increased by {headcountChange} employee(s), contributing to higher payroll costs");
-            }
-            else
-            {
-                keyDrivers.Add($"Headcount decreased by {Math.Abs(headcountChange)} employee(s), reducing overall payroll costs");
-            }
+            keyDrivers.Add(headcountChange > 0
+                ? $"Headcount increased by {headcountChange} employee(s), contributing to higher payroll costs"
+                : $"Headcount decreased by {Math.Abs(headcountChange)} employee(s), reducing overall payroll costs");
         }
         else if (Math.Abs(costChange) > 100)
         {
@@ -250,42 +245,32 @@ public class PayrollComparisonService
         }
 
         // 3. Individual employee gross changes
-        if (employeeAnalysis.employeesWithLowerGross > 0 && grossChange < 0)
+        if (employeeAnalysis.EmployeesWithLowerGross > 0 && grossChange < 0)
         {
-            keyDrivers.Add($"{employeeAnalysis.employeesWithLowerGross} employee(s) had lower gross amounts compared to the previous month");
+            keyDrivers.Add($"{employeeAnalysis.EmployeesWithLowerGross} employee(s) had lower gross amounts compared to the previous month");
         }
-        else if (employeeAnalysis.employeesWithHigherGross > 0 && grossChange > 0)
+        else if (employeeAnalysis.EmployeesWithHigherGross > 0 && grossChange > 0)
         {
-            keyDrivers.Add($"{employeeAnalysis.employeesWithHigherGross} employee(s) had higher gross amounts compared to the previous month");
+            keyDrivers.Add($"{employeeAnalysis.EmployeesWithHigherGross} employee(s) had higher gross amounts compared to the previous month");
         }
 
         // 4. Leave-related analysis
-        if (leaveAnalysis.hasSignificantLeavePayChange)
+        if (leaveAnalysis.HasSignificantLeavePayChange)
         {
-            if (leaveAnalysis.leavePayChange < 0)
-            {
-                keyDrivers.Add("Leave pay amounts decreased compared to the previous period");
-            }
-            else
-            {
-                keyDrivers.Add("Leave pay amounts increased in the current period");
-            }
+            keyDrivers.Add(leaveAnalysis.LeavePayChange < 0
+                ? "Leave pay amounts decreased compared to the previous period"
+                : "Leave pay amounts increased in the current period");
         }
 
-        if (leaveAnalysis.hasSignificantUnpaidLeaveChange)
+        if (leaveAnalysis.HasSignificantUnpaidLeaveChange)
         {
-            if (leaveAnalysis.unpaidLeaveChange > 0)
-            {
-                keyDrivers.Add($"Unpaid leave deductions increased, affecting {leaveAnalysis.employeesWithUnpaidLeave} employee(s)");
-            }
-            else
-            {
-                keyDrivers.Add("Unpaid leave deductions from the previous period were reduced or removed");
-            }
+            keyDrivers.Add(leaveAnalysis.UnpaidLeaveChange > 0
+                ? $"Unpaid leave deductions increased, affecting {leaveAnalysis.EmployeesWithUnpaidLeave} employee(s)"
+                : "Unpaid leave deductions from the previous period were reduced or removed");
         }
 
         // 5. Combined leave impact
-        if (leaveAnalysis.hasSignificantLeavePayChange || leaveAnalysis.hasSignificantUnpaidLeaveChange)
+        if (leaveAnalysis.HasSignificantLeavePayChange || leaveAnalysis.HasSignificantUnpaidLeaveChange)
         {
             if (!keyDrivers.Any(k => k.Contains("Leave")))
             {
@@ -309,13 +294,13 @@ public class PayrollComparisonService
         }
 
         // 2. Base salary stability (from payrollItems[].amount analysis)
-        if (employeeAnalysis.baseSalaryStable && Math.Abs(grossChange) > 100)
+        if (employeeAnalysis.BaseSalaryStable && Math.Abs(grossChange) > 100)
         {
             notableObservations.Add("Most base salaries appear consistent, suggesting changes were driven by variable components rather than structural salary changes");
         }
-        else if (!employeeAnalysis.baseSalaryStable && employeeAnalysis.employeesWithSalaryChange > 0)
+        else if (employeeAnalysis is { BaseSalaryStable: false, EmployeesWithSalaryChange: > 0 })
         {
-            notableObservations.Add($"{employeeAnalysis.employeesWithSalaryChange} employee(s) had base salary changes this period");
+            notableObservations.Add($"{employeeAnalysis.EmployeesWithSalaryChange} employee(s) had base salary changes this period");
         }
 
         // 3. Net-to-gross ratio (deduction pattern indicator)
@@ -327,36 +312,36 @@ public class PayrollComparisonService
         }
 
         // 4. Payroll errors/warnings (from error.message)
-        if (errorAnalysis.hasErrors)
+        if (errorAnalysis.HasErrors)
         {
-            if (errorAnalysis.prevErrorCount > 0 && errorAnalysis.currErrorCount > 0)
+            if (errorAnalysis is { PrevErrorCount: > 0, CurrErrorCount: > 0 })
             {
                 notableObservations.Add("Payroll calculation warnings were present in both periods");
             }
-            else if (errorAnalysis.currErrorCount > 0 && errorAnalysis.prevErrorCount == 0)
+            else if (errorAnalysis.CurrErrorCount > 0 && errorAnalysis.PrevErrorCount == 0)
             {
-                notableObservations.Add($"New payroll calculation warnings detected ({errorAnalysis.currErrorCount} employee(s) affected)");
+                notableObservations.Add($"New payroll calculation warnings detected ({errorAnalysis.CurrErrorCount} employee(s) affected)");
             }
-            else if (errorAnalysis.prevErrorCount > 0 && errorAnalysis.currErrorCount == 0)
+            else if (errorAnalysis.PrevErrorCount > 0 && errorAnalysis.CurrErrorCount == 0)
             {
                 notableObservations.Add("Payroll calculation warnings from previous period have been resolved");
             }
         }
 
         // 5. New hires or terminations
-        if (employeeAnalysis.newEmployees > 0)
+        if (employeeAnalysis.NewEmployees > 0)
         {
-            notableObservations.Add($"{employeeAnalysis.newEmployees} new employee(s) added to payroll this period");
+            notableObservations.Add($"{employeeAnalysis.NewEmployees} new employee(s) added to payroll this period");
         }
-        if (employeeAnalysis.exitedEmployees > 0)
+        if (employeeAnalysis.ExitedEmployees > 0)
         {
-            notableObservations.Add($"{employeeAnalysis.exitedEmployees} employee(s) no longer in payroll this period");
+            notableObservations.Add($"{employeeAnalysis.ExitedEmployees} employee(s) no longer in payroll this period");
         }
 
         // 6. Leave pay activity
-        if (leaveAnalysis.employeesWithLeavePay > 0)
+        if (leaveAnalysis.EmployeesWithLeavePay > 0)
         {
-            notableObservations.Add($"{leaveAnalysis.employeesWithLeavePay} employee(s) received leave pay in the current period");
+            notableObservations.Add($"{leaveAnalysis.EmployeesWithLeavePay} employee(s) received leave pay in the current period");
         }
 
         // Generate headline summary
@@ -397,29 +382,29 @@ public class PayrollComparisonService
 
     private class EmployeeAnalysisResult
     {
-        public int employeesWithHigherGross { get; set; }
-        public int employeesWithLowerGross { get; set; }
-        public bool baseSalaryStable { get; set; }
-        public int employeesWithSalaryChange { get; set; }
-        public int newEmployees { get; set; }
-        public int exitedEmployees { get; set; }
+        public int EmployeesWithHigherGross { get; set; }
+        public int EmployeesWithLowerGross { get; set; }
+        public bool BaseSalaryStable { get; set; }
+        public int EmployeesWithSalaryChange { get; set; }
+        public int NewEmployees { get; set; }
+        public int ExitedEmployees { get; set; }
     }
 
     private class LeaveAnalysisResult
     {
-        public decimal leavePayChange { get; set; }
-        public decimal unpaidLeaveChange { get; set; }
-        public bool hasSignificantLeavePayChange { get; set; }
-        public bool hasSignificantUnpaidLeaveChange { get; set; }
-        public int employeesWithLeavePay { get; set; }
-        public int employeesWithUnpaidLeave { get; set; }
+        public decimal LeavePayChange { get; set; }
+        public decimal UnpaidLeaveChange { get; set; }
+        public bool HasSignificantLeavePayChange { get; set; }
+        public bool HasSignificantUnpaidLeaveChange { get; set; }
+        public int EmployeesWithLeavePay { get; set; }
+        public int EmployeesWithUnpaidLeave { get; set; }
     }
 
     private class ErrorAnalysisResult
     {
-        public int prevErrorCount { get; set; }
-        public int currErrorCount { get; set; }
-        public bool hasErrors => prevErrorCount > 0 || currErrorCount > 0;
+        public int PrevErrorCount { get; set; }
+        public int CurrErrorCount { get; set; }
+        public bool HasErrors => PrevErrorCount > 0 || CurrErrorCount > 0;
     }
 
     #endregion
@@ -462,13 +447,13 @@ public class PayrollComparisonService
             var headcountDesc = headcountChange > 0 ? "additional employees" : "fewer employees";
             return $"Total payroll {directionWord} {magnitude} compared to last month, primarily driven by {Math.Abs(headcountChange)} {headcountDesc}.";
         }
-        else if (leaveAnalysis.hasSignificantLeavePayChange || leaveAnalysis.hasSignificantUnpaidLeaveChange)
+        else if (leaveAnalysis.HasSignificantLeavePayChange || leaveAnalysis.HasSignificantUnpaidLeaveChange)
         {
             return $"Total payroll {directionWord} {magnitude} compared to last month, primarily driven by leave-related adjustments.";
         }
-        else if (!employeeAnalysis.baseSalaryStable && employeeAnalysis.employeesWithSalaryChange > 0)
+        else if (!employeeAnalysis.BaseSalaryStable && employeeAnalysis.EmployeesWithSalaryChange > 0)
         {
-            return $"Total payroll {directionWord} {magnitude} compared to last month, driven by salary changes for {employeeAnalysis.employeesWithSalaryChange} employee(s).";
+            return $"Total payroll {directionWord} {magnitude} compared to last month, driven by salary changes for {employeeAnalysis.EmployeesWithSalaryChange} employee(s).";
         }
         else if (Math.Abs(grossChange) > Math.Abs(costChange) * 0.5m)
         {
@@ -529,12 +514,12 @@ public class PayrollComparisonService
 
         return new EmployeeAnalysisResult
         {
-            employeesWithHigherGross = higherGross,
-            employeesWithLowerGross = lowerGross,
-            baseSalaryStable = stableBaseSalary > changedBaseSalary,
-            employeesWithSalaryChange = changedBaseSalary,
-            newEmployees = newEmployees,
-            exitedEmployees = exitedEmployees
+            EmployeesWithHigherGross = higherGross,
+            EmployeesWithLowerGross = lowerGross,
+            BaseSalaryStable = stableBaseSalary > changedBaseSalary,
+            EmployeesWithSalaryChange = changedBaseSalary,
+            NewEmployees = newEmployees,
+            ExitedEmployees = exitedEmployees
         };
     }
 
@@ -566,12 +551,12 @@ public class PayrollComparisonService
 
         return new LeaveAnalysisResult
         {
-            leavePayChange = leavePayChange,
-            unpaidLeaveChange = unpaidLeaveChange,
-            hasSignificantLeavePayChange = Math.Abs(leavePayChange) > 100,
-            hasSignificantUnpaidLeaveChange = Math.Abs(unpaidLeaveChange) > 100,
-            employeesWithLeavePay = employeesWithLeavePay,
-            employeesWithUnpaidLeave = employeesWithUnpaidLeave
+            LeavePayChange = leavePayChange,
+            UnpaidLeaveChange = unpaidLeaveChange,
+            HasSignificantLeavePayChange = Math.Abs(leavePayChange) > 100,
+            HasSignificantUnpaidLeaveChange = Math.Abs(unpaidLeaveChange) > 100,
+            EmployeesWithLeavePay = employeesWithLeavePay,
+            EmployeesWithUnpaidLeave = employeesWithUnpaidLeave
         };
     }
 
@@ -590,8 +575,8 @@ public class PayrollComparisonService
 
         return new ErrorAnalysisResult
         {
-            prevErrorCount = prevErrors.Count,
-            currErrorCount = currErrors.Count
+            PrevErrorCount = prevErrors.Count,
+            CurrErrorCount = currErrors.Count
         };
     }
 
@@ -615,7 +600,7 @@ public class PayrollComparisonService
             return "medium";
 
         // Check for significant errors affecting confidence
-        if (errorAnalysis.currErrorCount > 3 || errorAnalysis.prevErrorCount > 3)
+        if (errorAnalysis.CurrErrorCount > 3 || errorAnalysis.PrevErrorCount > 3)
             return "medium";
 
         return "high";

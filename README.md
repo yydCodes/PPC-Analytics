@@ -94,7 +94,8 @@ docker-compose up -d
 - Analyzes current payroll in context of historical patterns
 - Identifies unusual, risky, or inconsistent changes
 - Flags items for review (does not assume errors)
-- Provides recommended actions
+- Provides neutral review suggestions for verification (not corrections)
+- Assigns severity levels based on potential impact
 
 ## Usage
 
@@ -207,6 +208,151 @@ You can also use environment variables:
 
 **Note:** The `BaseUrl` setting is now fully configurable and no longer hardcoded in the application code.
 
+## AI/LLM Configuration (Optional)
+
+The application supports AI-powered analysis using a self-hosted LLM via Ollama. This feature is optional and the application will fall back to rule-based analysis if AI is not configured or unavailable.
+
+### Setting Up Ollama with llama3.2
+
+#### Prerequisites
+- Ollama installed on your system
+- At least 4GB of available RAM (8GB+ recommended)
+- Internet connection for initial model download
+
+#### Installation Steps
+
+**Windows:**
+1. Download Ollama from [https://ollama.ai/download](https://ollama.ai/download)
+2. Install and run Ollama
+3. Open a terminal and run:
+   ```bash
+   ollama pull llama3.2
+   ```
+4. Verify installation:
+   ```bash
+   ollama list
+   ```
+   You should see `llama3.2` in the list.
+
+**macOS/Linux:**
+```bash
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull the llama3.2 model
+ollama pull llama3.2
+
+# Verify installation
+ollama list
+```
+
+#### Starting Ollama
+
+Ollama runs as a service and starts automatically. The default API endpoint is `http://localhost:11434`.
+
+To verify Ollama is running:
+```bash
+curl http://localhost:11434/api/tags
+```
+
+Or visit `http://localhost:11434` in your browser.
+
+### Configuring AI Service
+
+Configure the AI service in `appsettings.json`:
+
+```json
+{
+  "AiService": {
+    "Enabled": true,
+    "BaseUrl": "http://localhost:11434",
+    "ModelName": "llama3.2",
+    "TimeoutSeconds": 60,
+    "Temperature": 0.7
+  }
+}
+```
+
+**Configuration Options:**
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `Enabled` | Enable/disable AI features | `false` |
+| `BaseUrl` | Ollama API endpoint | `http://localhost:11434` |
+| `ModelName` | LLM model to use (e.g., "llama3.2", "mistral", "phi3") | `llama3.2` |
+| `TimeoutSeconds` | Request timeout in seconds | `60` |
+| `Temperature` | Model creativity (0.0-1.0, lower = more deterministic) | `0.7` |
+
+**Alternative Configuration via Environment Variables:**
+- `AI_SERVICE__ENABLED=true`
+- `AI_SERVICE__BASE_URL=http://localhost:11434`
+- `AI_SERVICE__MODEL_NAME=llama3.2`
+- `AI_SERVICE__TIMEOUT_SECONDS=60`
+- `AI_SERVICE__TEMPERATURE=0.7`
+
+### AI Prompts Overview
+
+The application uses feature-specific prompts to guide AI analysis. Full prompts are defined in `PayrollIntelligence.Core/AiConfiguration.cs` and can be customized if needed.
+
+**1. Payroll Summary (PayrollComparisonPrompt)**
+- Determines overall payroll direction (increase/decrease/stable)
+- Identifies meaningful changes between periods
+- Provides management-friendly narrative summaries
+- Outputs structured JSON with direction, summary, key drivers, and confidence level
+
+**2. Detailed Changes (PayrollDifferencesPrompt)**
+- Groups employees by similar change patterns
+- Explains changes in plain language
+- Highlights affected employees
+- Explains why each change group matters to payroll admins
+- Outputs structured JSON with change groups and affected employees
+
+**3. Risk & Review (PayrollAnomalyPrompt)**
+- Identifies items that may deserve human review
+- Assigns review severity based on potential impact
+- Explains why each item stands out
+- Suggests neutral verification steps (not corrections)
+- Outputs structured JSON with review items, severity, explanations, and review suggestions
+
+**Prompt Customization:**
+To customize prompts, edit the prompt properties in `AiConfiguration.cs` or override them in `appsettings.json`:
+
+```json
+{
+  "AiService": {
+    "SystemPrompt": "Your custom system prompt...",
+    "PayrollComparisonPrompt": "Your custom comparison prompt...",
+    "PayrollDifferencesPrompt": "Your custom differences prompt...",
+    "PayrollAnomalyPrompt": "Your custom anomaly prompt..."
+  }
+}
+```
+
+### AI Service Behavior
+
+- **Graceful Fallback**: If AI is disabled or unavailable, the application automatically falls back to rule-based analysis
+- **No Data Loss**: All features work without AI; AI enhances explanations and insights
+- **Performance**: AI responses are cached where appropriate to improve response times
+- **Error Handling**: AI service errors are logged but don't break the application
+
+### Troubleshooting AI Service
+
+**Issue: AI not working**
+- Verify Ollama is running: `curl http://localhost:11434/api/tags`
+- Check `Enabled` is set to `true` in configuration
+- Verify the model is installed: `ollama list`
+- Check application logs for connection errors
+
+**Issue: Slow AI responses**
+- Increase `TimeoutSeconds` in configuration
+- Consider using a smaller/faster model (e.g., `phi3` instead of `llama3.2`)
+- Ensure adequate system resources (RAM, CPU)
+
+**Issue: AI returns unexpected results**
+- Adjust `Temperature` setting (lower = more deterministic)
+- Review and customize prompts in `AiConfiguration.cs`
+- Check that the model supports JSON output format
+
 ## Project Structure
 
 ```
@@ -215,17 +361,72 @@ PPC-Analytics/
 │   ├── Services/
 │   │   ├── PayrollComparisonService.cs
 │   │   ├── PayrollDifferencesService.cs
-│   │   └── PayrollAnomalyService.cs
-│   ├── PayrollModels.cs
+│   │   ├── PayrollAnomalyService.cs
+│   │   └── AiReasoningService.cs
+│   ├── Models/                     # Data models and DTOs
+│   │   ├── ApiConfiguration.cs
+│   │   ├── Anomaly.cs
+│   │   ├── AnomalyCategory.cs
+│   │   ├── AnomalyDetectionResult.cs
+│   │   ├── AnomalyScope.cs
+│   │   ├── AnomalySeverity.cs
+│   │   ├── ApiRequestLog.cs
+│   │   ├── AttentionItem.cs
+│   │   ├── ChangeGroup.cs
+│   │   ├── EmployeePayroll.cs
+│   │   ├── KeyDifference.cs
+│   │   ├── KeyDifferencesResult.cs
+│   │   ├── LeavePayPayrollItem.cs
+│   │   ├── PayrollComparisonResult.cs
+│   │   ├── PayrollData.cs
+│   │   ├── PayrollError.cs
+│   │   ├── PayrollItem.cs
+│   │   ├── PayrollMetrics.cs
+│   │   ├── PayrollOverview.cs
+│   │   ├── PayrollTotals.cs
+│   │   ├── PayrollYearItem.cs
+│   │   ├── PayrollYearResponse.cs
+│   │   ├── StatutoryContribution.cs
+│   │   └── UnpaidLeavePayrollItem.cs
+│   ├── AiConfiguration.cs
 │   ├── PayrollApiService.cs
 │   ├── PayrollAnalysisService.cs
-│   └── ApiConfiguration.cs
+│   └── PayrollIntelligence.Core.csproj
 ├── PayrollIntelligence.Web/        # ASP.NET Core Web Application
 │   ├── Controllers/
+│   │   └── HomeController.cs
 │   ├── Views/
-│   └── wwwroot/
+│   │   ├── Home/
+│   │   └── Shared/
+│   ├── Models/
+│   │   └── ErrorViewModel.cs
+│   ├── wwwroot/
+│   │   ├── css/
+│   │   └── js/
+│   ├── Program.cs
+│   ├── appsettings.json
+│   ├── libman.json
+│   ├── Properties/
+│   └── PayrollIntelligence.Web.csproj
+├── PayrollIntelligence.Tests/     # Unit tests
+│   ├── Services/
+│   │   ├── PayrollAnalysisServiceTests.cs
+│   │   ├── PayrollAnomalyServiceTests.cs
+│   │   ├── PayrollAnomalyServiceHybridTests.cs
+│   │   ├── PayrollComparisonServiceTests.cs
+│   │   ├── PayrollComparisonServiceHybridTests.cs
+│   │   ├── PayrollDifferencesServiceTests.cs
+│   │   ├── PayrollDifferencesServiceHybridTests.cs
+│   │   └── AiFallbackTests.cs
+│   ├── Helpers/
+│   │   ├── MockAiReasoningService.cs
+│   │   └── TestDataHelper.cs
+│   ├── README.md
+│   └── PayrollIntelligence.Tests.csproj
+├── PayrollIntelligence.sln        # Solution file
 ├── Dockerfile
 ├── docker-compose.yml
+├── .gitignore
 └── README.md
 ```
 
@@ -277,6 +478,7 @@ When you use the web interface to analyze payroll data, you'll see comprehensive
 **Risk & Review:**
 - Anomalies with severity levels (low/medium/high)
 - Reasons for flagging items
+- Neutral review suggestions for verification
 - Recommended actions for review
 
 ## Analysis Rules
@@ -286,6 +488,41 @@ All analyses follow these principles:
 - **Conservative approach**: Avoid false alarms
 - **Data-driven**: Do not guess missing data
 - **Actionable insights**: Focus on meaningful changes
+
+## Testing
+
+The project includes a comprehensive test suite. To run tests:
+
+### Prerequisites
+- .NET 8.0 SDK installed
+
+### Running Tests
+
+From the repository root directory:
+
+```bash
+# Run all tests
+dotnet test
+
+# Run tests with detailed output
+dotnet test --verbosity normal
+
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~PayrollAnomalyServiceTests"
+
+# Run tests with code coverage
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Payroll Summary**: Direction detection, percentage changes, edge cases
+- **Detailed Changes**: Leave adjustments, new employees, zero pay detection
+- **Risk & Review**: Anomaly detection, severity assignment, review suggestions
+- **Edge Cases**: Empty data, null values, error handling
+
+For more details, see `PayrollIntelligence.Tests/README.md`.
 
 ## Output Formats
 
