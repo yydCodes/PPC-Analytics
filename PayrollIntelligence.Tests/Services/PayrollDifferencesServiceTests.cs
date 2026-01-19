@@ -21,11 +21,11 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.change_groups);
-        var leaveGroup = result.change_groups.FirstOrDefault(g => 
-            g.group_title?.Contains("Leave", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.NotNull(result.ChangeGroups);
+        var leaveGroup = result.ChangeGroups.FirstOrDefault(g => 
+            g.GroupTitle?.Contains("Leave", StringComparison.OrdinalIgnoreCase) == true);
         Assert.NotNull(leaveGroup);
-        Assert.True(leaveGroup.affected_employees?.Count > 0);
+        Assert.True(leaveGroup.AffectedEmployees?.Count > 0);
     }
 
     [Fact]
@@ -39,11 +39,11 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.change_groups);
-        var newEmployeeGroup = result.change_groups.FirstOrDefault(g => 
-            g.group_title?.Contains("New Employees", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.NotNull(result.ChangeGroups);
+        var newEmployeeGroup = result.ChangeGroups.FirstOrDefault(g => 
+            g.GroupTitle?.Contains("New Employees", StringComparison.OrdinalIgnoreCase) == true);
         Assert.NotNull(newEmployeeGroup);
-        Assert.True(newEmployeeGroup.affected_employees?.Count > 0);
+        Assert.True(newEmployeeGroup.AffectedEmployees?.Count > 0);
     }
 
     [Fact]
@@ -57,10 +57,10 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.attention_items);
-        Assert.True(result.attention_items.Count > 0);
-        var zeroPayItem = result.attention_items.FirstOrDefault(a => 
-            a.issue?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.NotNull(result.AttentionItems);
+        Assert.True(result.AttentionItems.Count > 0);
+        var zeroPayItem = result.AttentionItems.FirstOrDefault(a => 
+            a.Issue?.Contains("zero", StringComparison.OrdinalIgnoreCase) == true);
         Assert.NotNull(zeroPayItem);
     }
 
@@ -75,9 +75,9 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.attention_items);
-        var errorItem = result.attention_items.FirstOrDefault(a => 
-            a.issue?.Contains("warning", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.NotNull(result.AttentionItems);
+        var errorItem = result.AttentionItems.FirstOrDefault(a => 
+            a.Issue?.Contains("warning", StringComparison.OrdinalIgnoreCase) == true);
         Assert.NotNull(errorItem);
     }
 
@@ -92,9 +92,9 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.change_groups);
-        var removedGroup = result.change_groups.FirstOrDefault(g => 
-            g.group_title?.Contains("Removed", StringComparison.OrdinalIgnoreCase) == true);
+        Assert.NotNull(result.ChangeGroups);
+        var removedGroup = result.ChangeGroups.FirstOrDefault(g => 
+            g.GroupTitle?.Contains("Removed", StringComparison.OrdinalIgnoreCase) == true);
         Assert.NotNull(removedGroup);
     }
 
@@ -109,11 +109,11 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.payroll_overview);
-        Assert.NotEmpty(result.payroll_overview.summary);
-        Assert.NotEmpty(result.payroll_overview.headcount_change);
-        Assert.NotEmpty(result.payroll_overview.gross_pay_trend);
-        Assert.NotEmpty(result.payroll_overview.employer_cost_trend);
+        Assert.NotNull(result.PayrollOverview);
+        Assert.NotEmpty(result.PayrollOverview.Summary);
+        Assert.NotEmpty(result.PayrollOverview.HeadcountChange);
+        Assert.NotEmpty(result.PayrollOverview.GrossPayTrend);
+        Assert.NotEmpty(result.PayrollOverview.EmployerCostTrend);
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public class PayrollDifferencesServiceTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert
-        Assert.NotNull(result.confidence_level);
-        Assert.Contains(result.confidence_level, new[] { "high", "medium", "low" });
+        Assert.NotNull(result.ConfidenceLevel);
+        Assert.Contains(result.ConfidenceLevel, new[] { "high", "medium", "low" });
     }
 
     [Fact]
@@ -137,13 +137,13 @@ public class PayrollDifferencesServiceTests
         // Arrange
         var previous = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
         var current = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
 
         // Act
@@ -151,6 +151,6 @@ public class PayrollDifferencesServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("low", result.confidence_level);
+        Assert.Equal("low", result.ConfidenceLevel);
     }
 }

@@ -1,4 +1,18 @@
 @model PayrollIntelligence.Core.AnomalyDetectionResult?
+@using PayrollIntelligence.Core
+
+@functions {
+    string GetCategoryDisplayName(AnomalyCategory category)
+    {
+        return category switch
+        {
+            AnomalyCategory.PayConsistency => "Pay Consistency",
+            AnomalyCategory.PayrollItems => "Payroll Items",
+            AnomalyCategory.PayrollTotal => "Payroll Total",
+            _ => category.ToString()
+        };
+    }
+}
 
 @{
     ViewData["Title"] = "Risk & Review";
@@ -148,17 +162,17 @@
                         </div>
 
                         <!-- Summary Section -->
-                        @if (!string.IsNullOrEmpty(Model.summary))
+                        @if (!string.IsNullOrEmpty(Model?.Summary))
                         {
                             <div class="alert alert-info mb-4">
                                 <h6><i class="fas fa-clipboard-list"></i> Summary</h6>
-                                <p class="mb-0">@Model.summary</p>
+                                <p class="mb-0">@Model.Summary</p>
                             </div>
                         }
 
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Anomalies Detected</h5>
-                            @if (Model.anomalies.Any())
+                            @if (Model?.Anomalies?.Any() == true)
                             {
                                 <div>
                                     <button class="btn btn-outline-secondary btn-sm" id="expandAllBtn" onclick="toggleAllAccordions(true)">
@@ -171,21 +185,21 @@
                             }
                         </div>
 
-                        @if (Model.anomalies.Any())
+                        @if (Model?.Anomalies?.Any() == true)
                         {
                             <!-- Group anomalies by category, then by title -->
-                            var groupedByCategory = Model.anomalies
-                                .GroupBy(a => a.category)
-                                .OrderByDescending(g => g.Any(a => a.severity == "high"))
-                                .ThenByDescending(g => g.Any(a => a.severity == "medium"));
+                            var groupedByCategory = Model!.Anomalies!
+                                .GroupBy(a => a.Category)
+                                .OrderByDescending(g => g.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.High))
+                                .ThenByDescending(g => g.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.Medium));
                             
                             var categoryIndex = 0;
                             <div class="accordion" id="anomalyAccordion">
                                 @foreach (var categoryGroup in groupedByCategory)
                                 {
                                     var categoryId = $"category-{categoryIndex}";
-                                    var highestSeverity = categoryGroup.Any(a => a.severity == "high") ? "high" : 
-                                                          categoryGroup.Any(a => a.severity == "medium") ? "medium" : "low";
+                                    var highestSeverity = categoryGroup.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.High) ? "high" : 
+                                                          categoryGroup.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.Medium) ? "medium" : "low";
                                     var categoryBorderClass = highestSeverity switch
                                     {
                                         "high" => "border-danger",
@@ -203,7 +217,7 @@
                                         <h2 class="accordion-header">
                                             <button class="accordion-button @categoryBgClass" type="button" data-bs-toggle="collapse" data-bs-target="#@categoryId" aria-expanded="true" aria-controls="@categoryId">
                                                 <i class="fas fa-folder-open me-2"></i>
-                                                <strong>@categoryGroup.Key</strong>
+                                                <strong>@GetCategoryDisplayName(categoryGroup.Key)</strong>
                                                 <span class="badge bg-light text-dark ms-2">@categoryGroup.Count() item(s)</span>
                                             </button>
                                         </h2>
@@ -212,16 +226,16 @@
                                                 <!-- Group by title within category -->
                                                 @{
                                                     var groupedByTitle = categoryGroup
-                                                        .GroupBy(a => a.title)
-                                                        .OrderByDescending(g => g.Any(a => a.severity == "high") ? 3 : g.Any(a => a.severity == "medium") ? 2 : 1);
+                                                        .GroupBy(a => a.Title)
+                                                        .OrderByDescending(g => g.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.High) ? 3 : g.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.Medium) ? 2 : 1);
                                                     var titleIndex = 0;
                                                 }
                                                 <div class="accordion" id="@($"titleAccordion-{categoryIndex}")">
                                                     @foreach (var titleGroup in groupedByTitle)
                                                     {
                                                         var titleId = $"title-{categoryIndex}-{titleIndex}";
-                                                        var titleSeverity = titleGroup.Any(a => a.severity == "high") ? "high" : 
-                                                                            titleGroup.Any(a => a.severity == "medium") ? "medium" : "low";
+                                                        var titleSeverity = titleGroup.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.High) ? "high" : 
+                                                                            titleGroup.Any(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.Medium) ? "medium" : "low";
                                                         var titleBorderClass = titleSeverity switch
                                                         {
                                                             "high" => "border-danger",
@@ -263,25 +277,25 @@
                                                                                 </tr>
                                                                             </thead>
                                                                             <tbody>
-                                                                                @foreach (var anomaly in titleGroup.OrderBy(a => a.reference))
+                                                                                @foreach (var anomaly in titleGroup.OrderBy(a => a.Reference))
                                                                                 {
-                                                                                    var scopeIcon = anomaly.scope.ToLower() switch
+                                                                                    var scopeIcon = anomaly.Scope switch
                                                                                     {
-                                                                                        "employee" => "fas fa-user",
-                                                                                        "payroll" => "fas fa-file-invoice-dollar",
+                                                                                        PayrollIntelligence.Core.AnomalyScope.Employee => "fas fa-user",
+                                                                                        PayrollIntelligence.Core.AnomalyScope.Payroll => "fas fa-file-invoice-dollar",
                                                                                         _ => "fas fa-circle"
                                                                                     };
 
                                                                                     <tr>
                                                                                         <td>
                                                                                             <i class="@scopeIcon text-muted me-1"></i>
-                                                                                            <span class="text-primary fw-bold">@anomaly.reference</span>
+                                                                                            <span class="text-primary fw-bold">@anomaly.Reference</span>
                                                                                         </td>
-                                                                                        <td><small>@anomaly.explanation</small></td>
+                                                                                        <td><small>@anomaly.Explanation</small></td>
                                                                                         <td>
                                                                                             <small class="text-muted fst-italic">
                                                                                                 <i class="fas fa-lightbulb text-warning me-1"></i>
-                                                                                                @anomaly.review_suggestion
+                                                                                                @anomaly.ReviewSuggestion
                                                                                             </small>
                                                                                         </td>
                                                                                     </tr>
@@ -303,10 +317,10 @@
                             </div>
 
                             <!-- Suggested Review Actions -->
-                            var highCount = Model.anomalies.Count(a => a.severity == "high");
-                            var mediumCount = Model.anomalies.Count(a => a.severity == "medium");
-                            var hasStatutoryIssues = Model.anomalies.Any(a => a.category == "Statutory");
-                            var hasLeaveIssues = Model.anomalies.Any(a => a.category == "Leave");
+                            var highCount = Model.Anomalies.Count(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.High);
+                            var mediumCount = Model.Anomalies.Count(a => a.Severity == PayrollIntelligence.Core.AnomalySeverity.Medium);
+                            var hasStatutoryIssues = Model.Anomalies.Any(a => a.Category == PayrollIntelligence.Core.AnomalyCategory.Statutory);
+                            var hasLeaveIssues = Model.Anomalies.Any(a => a.Category == PayrollIntelligence.Core.AnomalyCategory.Leave);
                             <div class="card mt-4 border-warning">
                                 <div class="card-header bg-warning text-dark">
                                     <h6 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Suggested Next Steps</h6>

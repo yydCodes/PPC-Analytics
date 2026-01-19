@@ -24,10 +24,10 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("increase", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.True(result.current_metrics.employer_cost > result.previous_metrics.employer_cost);
+        Assert.Equal("increase", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.True(result.CurrentMetrics.EmployerCost > result.PreviousMetrics.EmployerCost);
     }
 
     [Fact]
@@ -42,9 +42,9 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.payroll_overview);
-        Assert.NotNull(result.change_groups);
-        Assert.NotNull(result.attention_items);
+        Assert.NotNull(result.PayrollOverview);
+        Assert.NotNull(result.ChangeGroups);
+        Assert.NotNull(result.AttentionItems);
     }
 
     [Fact]
@@ -59,8 +59,8 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result.anomalies);
-        Assert.Contains("No historical data", result.summary);
+        Assert.Empty(result.Anomalies);
+        Assert.Contains("No historical data", result.Summary);
     }
 }

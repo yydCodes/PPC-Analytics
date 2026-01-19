@@ -21,10 +21,10 @@ public class PayrollComparisonServiceTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert
-        Assert.Equal("increase", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.True(result.current_metrics.employer_cost > result.previous_metrics.employer_cost);
+        Assert.Equal("increase", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.True(result.CurrentMetrics.EmployerCost > result.PreviousMetrics.EmployerCost);
     }
 
     [Fact]
@@ -38,10 +38,10 @@ public class PayrollComparisonServiceTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert
-        Assert.Equal("decrease", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.True(result.current_metrics.employer_cost < result.previous_metrics.employer_cost);
+        Assert.Equal("decrease", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.True(result.CurrentMetrics.EmployerCost < result.PreviousMetrics.EmployerCost);
     }
 
     [Fact]
@@ -55,10 +55,10 @@ public class PayrollComparisonServiceTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert
-        Assert.Equal("stable", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.Equal(result.current_metrics.employer_cost, result.previous_metrics.employer_cost);
+        Assert.Equal("stable", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.Equal(result.CurrentMetrics.EmployerCost, result.PreviousMetrics.EmployerCost);
     }
 
     [Fact]
@@ -72,9 +72,9 @@ public class PayrollComparisonServiceTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert
-        Assert.NotNull(result.key_drivers);
-        Assert.True(result.key_drivers.Count > 0);
-        Assert.Equal("increase", result.direction);
+        Assert.NotNull(result.KeyDrivers);
+        Assert.True(result.KeyDrivers.Count > 0);
+        Assert.Equal("increase", result.Direction);
     }
 
     [Fact]
@@ -88,11 +88,11 @@ public class PayrollComparisonServiceTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.Equal(15000m, result.current_metrics.gross_pay);
-        Assert.Equal(10000m, result.previous_metrics.gross_pay);
-        Assert.Equal("increase", result.direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.Equal(15000m, result.CurrentMetrics.GrossPay);
+        Assert.Equal(10000m, result.PreviousMetrics.GrossPay);
+        Assert.Equal("increase", result.Direction);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class PayrollComparisonServiceTests
     {
         // Arrange
         var previous = TestDataHelper.CreateSamplePayrollData(3);
-        previous.totals = null;
+        previous.Totals = null;
         var current = TestDataHelper.CreateSamplePayrollData(3);
 
         // Act - The service should handle null totals gracefully
@@ -108,7 +108,7 @@ public class PayrollComparisonServiceTests
         
         // Assert - Should still return a result, possibly with low confidence
         Assert.NotNull(result);
-        Assert.NotNull(result.direction);
+        Assert.NotNull(result.Direction);
     }
 
     [Fact]
@@ -117,8 +117,8 @@ public class PayrollComparisonServiceTests
         // Arrange
         var previous = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
         var current = TestDataHelper.CreateSamplePayrollData(3);
 
@@ -127,9 +127,9 @@ public class PayrollComparisonServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.direction);
+        Assert.NotNull(result.Direction);
         // Direction could be "increase" or "stable" depending on cost comparison
-        Assert.Contains(result.direction, new[] { "increase", "stable", "decrease" });
-        Assert.NotNull(result.key_drivers);
+        Assert.Contains(result.Direction, new[] { "increase", "stable", "decrease" });
+        Assert.NotNull(result.KeyDrivers);
     }
 }
