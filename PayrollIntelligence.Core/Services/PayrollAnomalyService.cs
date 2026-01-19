@@ -47,13 +47,17 @@ public class PayrollAnomalyService
                     // Convert AI review items to Anomaly format
                     var aiAnomalies = aiReview.ReviewItems.Select(item => new Anomaly
                     {
-                        category = "AI Review",
-                        severity = item.Severity ?? "medium",
-                        scope = item.Scope ?? "employee",
-                        reference = item.Reference ?? "",
-                        title = item.Title ?? "",
-                        explanation = item.Explanation ?? "",
-                        review_suggestion = item.ReviewSuggestion ?? ""
+                        Category = AnomalyCategory.PayrollItems, // Default category for AI review
+                        Severity = Enum.TryParse<AnomalySeverity>(item.Severity ?? "medium", true, out var severity) 
+                            ? severity 
+                            : AnomalySeverity.Medium,
+                        Scope = Enum.TryParse<AnomalyScope>(item.Scope ?? "employee", true, out var scope) 
+                            ? scope 
+                            : AnomalyScope.Employee,
+                        Reference = item.Reference ?? "",
+                        Title = item.Title ?? "",
+                        Explanation = item.Explanation ?? "",
+                        ReviewSuggestion = item.ReviewSuggestion ?? ""
                     }).ToList();
 
                     // Generate summary
@@ -63,9 +67,8 @@ public class PayrollAnomalyService
 
                     return new AnomalyDetectionResult
                     {
-                        anomalies = aiAnomalies,
-                        summary = summary,
-                        ai_insight = aiReview.OverallAssessment
+                        Anomalies = aiAnomalies,
+                        Summary = summary
                     };
                 }
             }
@@ -98,26 +101,26 @@ public class PayrollAnomalyService
         context.AppendLine();
 
         // Add summary statistics
-        var prevTotal = previous.totals;
-        var currTotal = current.totals;
+        var prevTotal = previous.Totals;
+        var currTotal = current.Totals;
         if (prevTotal != null && currTotal != null)
         {
             context.AppendLine("Payroll Summary:");
-            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
-            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
-            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+            context.AppendLine($"Previous Period: Gross={prevTotal.Gross:N2}, Net={prevTotal.Net:N2}, Cost={prevTotal.Cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.Gross:N2}, Net={currTotal.Net:N2}, Cost={currTotal.Cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.EmployeePayrolls?.Count ?? 0}, Current={current.EmployeePayrolls?.Count ?? 0}");
             context.AppendLine();
         }
 
         // Add employee-level changes that might indicate anomalies
-        var prevEmployees = previous.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var prevEmployees = previous.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
 
-        foreach (var currEmp in current.employeePayrolls ?? new List<EmployeePayroll>())
+        foreach (var currEmp in current.EmployeePayrolls ?? new List<EmployeePayroll>())
         {
-            var empName = currEmp.employeeName ?? currEmp.employeeNumber ?? "Unknown";
-            var empId = currEmp.employeeId ?? "";
+            var empName = currEmp.EmployeeName ?? currEmp.EmployeeNumber ?? "Unknown";
+            var empId = currEmp.EmployeeId ?? "";
 
             if (string.IsNullOrEmpty(empId) || !prevEmployees.TryGetValue(empId, out var prevEmp))
                 continue;
@@ -125,10 +128,10 @@ public class PayrollAnomalyService
             var changes = new List<string>();
 
             // Net pay vs salary consistency
-            var prevNet = prevEmp.statutoryContribution?.net ?? 0;
-            var currNet = currEmp.statutoryContribution?.net ?? 0;
-            var prevBaseSalary = prevEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
-            var currBaseSalary = currEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+            var prevNet = prevEmp.StatutoryContribution?.Net ?? 0;
+            var currNet = currEmp.StatutoryContribution?.Net ?? 0;
+            var prevBaseSalary = prevEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
+            var currBaseSalary = currEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
 
             if (Math.Abs(currNet - prevNet) > 50 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
             {
@@ -136,16 +139,16 @@ public class PayrollAnomalyService
             }
 
             // Leave changes
-            var prevUnpaid = prevEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
-            var currUnpaid = currEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
+            var prevUnpaid = prevEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
+            var currUnpaid = currEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
             if (Math.Abs(prevUnpaid - currUnpaid) > 10)
             {
                 changes.Add($"Unpaid leave changed from {prevUnpaid:N2} to {currUnpaid:N2}");
             }
 
             // Statutory changes
-            var prevMtd = prevEmp.statutoryContribution?.employeeMtd ?? 0;
-            var currMtd = currEmp.statutoryContribution?.employeeMtd ?? 0;
+            var prevMtd = prevEmp.StatutoryContribution?.EmployeeMtd ?? 0;
+            var currMtd = currEmp.StatutoryContribution?.EmployeeMtd ?? 0;
             if (Math.Abs(currMtd - prevMtd) > 100)
             {
                 changes.Add($"Tax deduction (MTD) changed by {Math.Abs(currMtd - prevMtd):N2}");
@@ -168,21 +171,21 @@ public class PayrollAnomalyService
 
         foreach (var anomaly in anomalies)
         {
-            context.AppendLine($"- [{anomaly.severity.ToUpper()}] {anomaly.scope}: {anomaly.reference}");
-            context.AppendLine($"  Issue: {anomaly.title}");
-            context.AppendLine($"  Details: {anomaly.explanation}");
+            context.AppendLine($"- [{anomaly.Severity.ToString().ToUpper()}] {anomaly.Scope}: {anomaly.Reference}");
+            context.AppendLine($"  Issue: {anomaly.Title}");
+            context.AppendLine($"  Details: {anomaly.Explanation}");
             context.AppendLine();
         }
 
         // Add summary statistics
-        var prevTotal = previous.totals;
-        var currTotal = current.totals;
+        var prevTotal = previous.Totals;
+        var currTotal = current.Totals;
         if (prevTotal != null && currTotal != null)
         {
             context.AppendLine("Payroll Summary:");
-            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
-            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
-            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+            context.AppendLine($"Previous Period: Gross={prevTotal.Gross:N2}, Net={prevTotal.Net:N2}, Cost={prevTotal.Cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.Gross:N2}, Net={currTotal.Net:N2}, Cost={currTotal.Cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.EmployeePayrolls?.Count ?? 0}, Current={current.EmployeePayrolls?.Count ?? 0}");
         }
 
         return context.ToString();
@@ -203,8 +206,8 @@ public class PayrollAnomalyService
         {
             return new AnomalyDetectionResult
             {
-                anomalies = new List<Anomaly>(),
-                summary = $"The selected draft payroll ({draftMonth:D2}/{draftYear}) has status {draftStatus}. Only draft payrolls (status 0) can be analyzed."
+                Anomalies = new List<Anomaly>(),
+                Summary = $"The selected draft payroll ({draftMonth:D2}/{draftYear}) has status {draftStatus}. Only draft payrolls (status 0) can be analyzed."
             };
         }
 
@@ -214,8 +217,8 @@ public class PayrollAnomalyService
         {
             return new AnomalyDetectionResult
             {
-                anomalies = new List<Anomaly>(),
-                summary = $"The selected comparison payroll ({comparisonMonth:D2}/{comparisonYear}) has status {comparisonStatus}. Only approved payrolls (status 2) can be used for comparison."
+                Anomalies = new List<Anomaly>(),
+                Summary = $"The selected comparison payroll ({comparisonMonth:D2}/{comparisonYear}) has status {comparisonStatus}. Only approved payrolls (status 2) can be used for comparison."
             };
         }
 
@@ -243,13 +246,13 @@ public class PayrollAnomalyService
     {
         var anomalies = new List<Anomaly>();
 
-        var prevEmployees = previous.employeePayrolls ?? new List<EmployeePayroll>();
-        var currEmployees = current.employeePayrolls ?? new List<EmployeePayroll>();
+        var prevEmployees = previous.EmployeePayrolls ?? new List<EmployeePayroll>();
+        var currEmployees = current.EmployeePayrolls ?? new List<EmployeePayroll>();
 
         // Build lookup dictionaries by employeeId
         var prevEmployeeDict = prevEmployees
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e);
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e);
 
         // ============================================
         // EMPLOYEE-LEVEL ANOMALY DETECTION
@@ -257,11 +260,11 @@ public class PayrollAnomalyService
 
         foreach (var currEmp in currEmployees)
         {
-            var employeeRef = currEmp.employeeName ?? currEmp.employeeNumber ?? currEmp.employeeId ?? "Unknown Employee";
+            var employeeRef = currEmp.EmployeeName ?? currEmp.EmployeeNumber ?? currEmp.EmployeeId ?? "Unknown Employee";
             
             // Find matching previous employee
             EmployeePayroll? prevEmp = null;
-            if (!string.IsNullOrEmpty(currEmp.employeeId) && prevEmployeeDict.TryGetValue(currEmp.employeeId, out var found))
+            if (!string.IsNullOrEmpty(currEmp.EmployeeId) && prevEmployeeDict.TryGetValue(currEmp.EmployeeId, out var found))
             {
                 prevEmp = found;
             }
@@ -296,8 +299,8 @@ public class PayrollAnomalyService
 
         return new AnomalyDetectionResult 
         { 
-            anomalies = anomalies,
-            summary = summary
+            Anomalies = anomalies,
+            Summary = summary
         };
     }
 
@@ -305,45 +308,45 @@ public class PayrollAnomalyService
 
     private static void DetectNetPayInconsistency(List<Anomaly> anomalies, EmployeePayroll prevEmp, EmployeePayroll currEmp, string employeeRef)
     {
-        var prevNet = prevEmp.statutoryContribution?.net ?? 0;
-        var currNet = currEmp.statutoryContribution?.net ?? 0;
-        var prevBaseSalary = prevEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
-        var currBaseSalary = currEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+        var prevNet = prevEmp.StatutoryContribution?.Net ?? 0;
+        var currNet = currEmp.StatutoryContribution?.Net ?? 0;
+        var prevBaseSalary = prevEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
+        var currBaseSalary = currEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
 
         // Net pay changed but base salary didn't
         if (Math.Abs(currNet - prevNet) > 50 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Pay Consistency",
-                severity = DetermineSeverity(Math.Abs(currNet - prevNet), 100, 500),
-                scope = "employee",
-                reference = employeeRef,
-                title = "Net pay changed without base salary change",
-                explanation = $"{employeeRef}'s net pay changed by RM {Math.Abs(currNet - prevNet):N2} compared to last month while the base salary remained the same, suggesting changes in deductions, leave, or statutory contributions.",
-                review_suggestion = "Review deductions, leave entries, or statutory contribution changes before approval."
+                Category = AnomalyCategory.PayConsistency,
+                Severity = DetermineSeverity(Math.Abs(currNet - prevNet), 100, 500),
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Net pay changed without base salary change",
+                Explanation = $"{employeeRef}'s net pay changed by RM {Math.Abs(currNet - prevNet):N2} compared to last month while the base salary remained the same, suggesting changes in deductions, leave, or statutory contributions.",
+                ReviewSuggestion = "Review deductions, leave entries, or statutory contribution changes before approval."
             });
         }
     }
 
     private static void DetectLeaveChanges(List<Anomaly> anomalies, EmployeePayroll prevEmp, EmployeePayroll currEmp, string employeeRef)
     {
-        var prevUnpaidLeaveTotal = prevEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
-        var currUnpaidLeaveTotal = currEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
-        var currUnpaidDays = currEmp.unpaidLeaveDays;
+        var prevUnpaidLeaveTotal = prevEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
+        var currUnpaidLeaveTotal = currEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
+        var currUnpaidDays = currEmp.UnpaidLeaveDays;
 
         // Unpaid leave appeared this month
         if (prevUnpaidLeaveTotal == 0 && currUnpaidLeaveTotal > 0)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Leave",
-                severity = "medium",
-                scope = "employee",
-                reference = employeeRef,
-                title = "Unpaid leave appeared this month",
-                explanation = $"Unpaid leave deduction of RM {currUnpaidLeaveTotal:N2} ({currUnpaidDays} days) was present in the current payroll but not in the previous period.",
-                review_suggestion = "Confirm unpaid leave records and employee notification with HR."
+                Category = AnomalyCategory.Leave,
+                Severity = AnomalySeverity.Medium,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Unpaid leave appeared this month",
+                Explanation = $"Unpaid leave deduction of RM {currUnpaidLeaveTotal:N2} ({currUnpaidDays} days) was present in the current payroll but not in the previous period.",
+                ReviewSuggestion = "Confirm unpaid leave records and employee notification with HR."
             });
         }
 
@@ -352,39 +355,39 @@ public class PayrollAnomalyService
         {
             anomalies.Add(new Anomaly
             {
-                category = "Leave",
-                severity = "low",
-                scope = "employee",
-                reference = employeeRef,
-                title = "Unpaid leave deduction removed",
-                explanation = $"Previous unpaid leave deduction of RM {prevUnpaidLeaveTotal:N2} is no longer present in the current payroll.",
-                review_suggestion = "Verify that unpaid leave was correctly processed or confirm if it was reversed intentionally."
+                Category = AnomalyCategory.Leave,
+                Severity = AnomalySeverity.Low,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Unpaid leave deduction removed",
+                Explanation = $"Previous unpaid leave deduction of RM {prevUnpaidLeaveTotal:N2} is no longer present in the current payroll.",
+                ReviewSuggestion = "Verify that unpaid leave was correctly processed or confirm if it was reversed intentionally."
             });
         }
 
         // Leave pay changes
-        var prevLeavePay = prevEmp.leavePayPayrollItem?.amount ?? 0;
-        var currLeavePay = currEmp.leavePayPayrollItem?.amount ?? 0;
+        var prevLeavePay = prevEmp.LeavePayPayrollItem?.Amount ?? 0;
+        var currLeavePay = currEmp.LeavePayPayrollItem?.Amount ?? 0;
 
         if (prevLeavePay == 0 && currLeavePay > 0)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Leave",
-                severity = "low",
-                scope = "employee",
-                reference = employeeRef,
-                title = "Leave pay added this month",
-                explanation = $"Leave pay of RM {currLeavePay:N2} was added in the current payroll.",
-                review_suggestion = "Confirm leave pay calculation is correct and matches approved leave records."
+                Category = AnomalyCategory.Leave,
+                Severity = AnomalySeverity.Low,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Leave pay added this month",
+                Explanation = $"Leave pay of RM {currLeavePay:N2} was added in the current payroll.",
+                ReviewSuggestion = "Confirm leave pay calculation is correct and matches approved leave records."
             });
         }
     }
 
     private static void DetectPayrollItemChanges(List<Anomaly> anomalies, EmployeePayroll prevEmp, EmployeePayroll currEmp, string employeeRef)
     {
-        var prevItemTypes = prevEmp.payrollItems?.Select(pi => pi.typeName).Where(t => t != null).ToHashSet() ?? new HashSet<string?>();
-        var currItemTypes = currEmp.payrollItems?.Select(pi => pi.typeName).Where(t => t != null).ToHashSet() ?? new HashSet<string?>();
+        var prevItemTypes = prevEmp.PayrollItems?.Select(pi => pi.TypeName).Where(t => t != null).ToHashSet() ?? new HashSet<string?>();
+        var currItemTypes = currEmp.PayrollItems?.Select(pi => pi.TypeName).Where(t => t != null).ToHashSet() ?? new HashSet<string?>();
 
         var missingItems = prevItemTypes.Except(currItemTypes).ToList();
         var newItems = currItemTypes.Except(prevItemTypes).ToList();
@@ -393,35 +396,35 @@ public class PayrollAnomalyService
         {
             anomalies.Add(new Anomaly
             {
-                category = "Payroll Items",
-                severity = "medium",
-                scope = "employee",
-                reference = employeeRef,
-                title = "Recurring payroll item(s) missing",
-                explanation = $"The following payroll items from last month are missing: {string.Join(", ", missingItems)}.",
-                review_suggestion = "Verify if items were intentionally removed or if this is a data entry issue."
+                Category = AnomalyCategory.PayrollItems,
+                Severity = AnomalySeverity.Medium,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Recurring payroll item(s) missing",
+                Explanation = $"The following payroll items from last month are missing: {string.Join(", ", missingItems)}.",
+                ReviewSuggestion = "Verify if items were intentionally removed or if this is a data entry issue."
             });
         }
 
         if (newItems.Count > 0)
         {
             // Check if these are deductions (higher scrutiny)
-            var newDeductions = currEmp.payrollItems?
-                .Where(pi => newItems.Contains(pi.typeName) && pi.isDeduction)
-                .Select(pi => pi.typeName)
+            var newDeductions = currEmp.PayrollItems?
+                .Where(pi => newItems.Contains(pi.TypeName) && pi.IsDeduction)
+                .Select(pi => pi.TypeName)
                 .ToList() ?? new List<string?>();
 
             if (newDeductions.Count > 0)
             {
                 anomalies.Add(new Anomaly
                 {
-                    category = "Payroll Items",
-                    severity = "medium",
-                    scope = "employee",
-                    reference = employeeRef,
-                    title = "New deduction(s) added",
-                    explanation = $"New deduction item(s) appeared this month: {string.Join(", ", newDeductions)}.",
-                    review_suggestion = "Confirm new deductions are authorized and correctly calculated."
+                    Category = AnomalyCategory.PayrollItems,
+                    Severity = AnomalySeverity.Medium,
+                    Scope = AnomalyScope.Employee,
+                    Reference = employeeRef,
+                    Title = "New deduction(s) added",
+                    Explanation = $"New deduction item(s) appeared this month: {string.Join(", ", newDeductions)}.",
+                    ReviewSuggestion = "Confirm new deductions are authorized and correctly calculated."
                 });
             }
         }
@@ -429,60 +432,60 @@ public class PayrollAnomalyService
 
     private static void DetectStatutoryChanges(List<Anomaly> anomalies, EmployeePayroll prevEmp, EmployeePayroll currEmp, string employeeRef)
     {
-        var prevStatutory = prevEmp.statutoryContribution;
-        var currStatutory = currEmp.statutoryContribution;
-        var prevBaseSalary = prevEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
-        var currBaseSalary = currEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+        var prevStatutory = prevEmp.StatutoryContribution;
+        var currStatutory = currEmp.StatutoryContribution;
+        var prevBaseSalary = prevEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
+        var currBaseSalary = currEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
 
         if (prevStatutory == null || currStatutory == null) return;
 
         // EPF changes with same salary
-        var epfChange = Math.Abs((currStatutory.employeeEpf + currStatutory.employerEpf) - 
-                                (prevStatutory.employeeEpf + prevStatutory.employerEpf));
+        var epfChange = Math.Abs((currStatutory.EmployeeEpf + currStatutory.EmployerEpf) - 
+                                (prevStatutory.EmployeeEpf + prevStatutory.EmployerEpf));
         if (epfChange > 50 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Statutory",
-                severity = "medium",
-                scope = "employee",
-                reference = employeeRef,
-                title = "EPF contribution changed without salary change",
-                explanation = $"EPF contribution changed by RM {epfChange:N2} while base salary remained the same.",
-                review_suggestion = "Review EPF rate settings or verify if employee category changed."
+                Category = AnomalyCategory.Statutory,
+                Severity = AnomalySeverity.Medium,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "EPF contribution changed without salary change",
+                Explanation = $"EPF contribution changed by RM {epfChange:N2} while base salary remained the same.",
+                ReviewSuggestion = "Review EPF rate settings or verify if employee category changed."
             });
         }
 
         // MTD (tax) significant change
-        var mtdChange = Math.Abs(currStatutory.employeeMtd - prevStatutory.employeeMtd);
+        var mtdChange = Math.Abs(currStatutory.EmployeeMtd - prevStatutory.EmployeeMtd);
         if (mtdChange > 100)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Statutory",
-                severity = DetermineSeverity(mtdChange, 200, 500),
-                scope = "employee",
-                reference = employeeRef,
-                title = "Significant MTD (tax) change",
-                explanation = $"Monthly Tax Deduction changed by RM {mtdChange:N2} from the previous period.",
-                review_suggestion = "Verify tax computation settings and any bonus or allowance changes affecting taxation."
+                Category = AnomalyCategory.Statutory,
+                Severity = DetermineSeverity(mtdChange, 200, 500),
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "Significant MTD (tax) change",
+                Explanation = $"Monthly Tax Deduction changed by RM {mtdChange:N2} from the previous period.",
+                ReviewSuggestion = "Verify tax computation settings and any bonus or allowance changes affecting taxation."
             });
         }
 
         // SOCSO/EIS unexpected change
-        var socsoChange = Math.Abs((currStatutory.employeeSocso + currStatutory.employerSocso) -
-                                  (prevStatutory.employeeSocso + prevStatutory.employerSocso));
+        var socsoChange = Math.Abs((currStatutory.EmployeeSocso + currStatutory.EmployerSocso) -
+                                  (prevStatutory.EmployeeSocso + prevStatutory.EmployerSocso));
         if (socsoChange > 20 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
         {
             anomalies.Add(new Anomaly
             {
-                category = "Statutory",
-                severity = "low",
-                scope = "employee",
-                reference = employeeRef,
-                title = "SOCSO contribution changed unexpectedly",
-                explanation = $"SOCSO contribution changed by RM {socsoChange:N2} without corresponding salary change.",
-                review_suggestion = "Check if employee SOCSO category or rate was modified."
+                Category = AnomalyCategory.Statutory,
+                Severity = AnomalySeverity.Low,
+                Scope = AnomalyScope.Employee,
+                Reference = employeeRef,
+                Title = "SOCSO contribution changed unexpectedly",
+                Explanation = $"SOCSO contribution changed by RM {socsoChange:N2} without corresponding salary change.",
+                ReviewSuggestion = "Check if employee SOCSO category or rate was modified."
             });
         }
     }
@@ -498,45 +501,45 @@ public class PayrollAnomalyService
         List<EmployeePayroll> prevEmployees,
         List<EmployeePayroll> currEmployees)
     {
-        var prevTotal = previous.totals;
-        var currTotal = current.totals;
+        var prevTotal = previous.Totals;
+        var currTotal = current.Totals;
 
         if (prevTotal != null && currTotal != null)
         {
             // Significant total cost change
-            var costChange = currTotal.cost - prevTotal.cost;
-            var costChangePercent = prevTotal.cost > 0 ? (costChange / prevTotal.cost) * 100 : 0;
+            var costChange = currTotal.Cost - prevTotal.Cost;
+            var costChangePercent = prevTotal.Cost > 0 ? (costChange / prevTotal.Cost) * 100 : 0;
 
             if (Math.Abs(costChangePercent) > 10)
             {
                 anomalies.Add(new Anomaly
                 {
-                    category = "Payroll Total",
-                    severity = DetermineSeverity(Math.Abs(costChangePercent), 15, 25),
-                    scope = "payroll",
-                    reference = "Payroll-wide",
-                    title = $"Total payroll cost {(costChange > 0 ? "increased" : "decreased")} significantly",
-                    explanation = $"Total payroll cost changed by {Math.Abs(costChangePercent):F1}% (RM {Math.Abs(costChange):N2}) compared to the previous period.",
-                    review_suggestion = "Review headcount changes, salary adjustments, or one-time payments contributing to this change."
+                    Category = AnomalyCategory.PayrollTotal,
+                    Severity = DetermineSeverity(Math.Abs(costChangePercent), 15, 25),
+                    Scope = AnomalyScope.Payroll,
+                    Reference = "Payroll-wide",
+                    Title = $"Total payroll cost {(costChange > 0 ? "increased" : "decreased")} significantly",
+                    Explanation = $"Total payroll cost changed by {Math.Abs(costChangePercent):F1}% (RM {Math.Abs(costChange):N2}) compared to the previous period.",
+                    ReviewSuggestion = "Review headcount changes, salary adjustments, or one-time payments contributing to this change."
                 });
             }
 
             // Net pay total vs gross discrepancy check
-            var netGrossRatioPrev = prevTotal.gross > 0 ? prevTotal.net / prevTotal.gross : 0;
-            var netGrossRatioCurr = currTotal.gross > 0 ? currTotal.net / currTotal.gross : 0;
+            var netGrossRatioPrev = prevTotal.Gross > 0 ? prevTotal.Net / prevTotal.Gross : 0;
+            var netGrossRatioCurr = currTotal.Gross > 0 ? currTotal.Net / currTotal.Gross : 0;
             var ratioChange = Math.Abs(netGrossRatioCurr - netGrossRatioPrev);
 
             if (ratioChange > 0.05m)
             {
                 anomalies.Add(new Anomaly
                 {
-                    category = "Payroll Total",
-                    severity = "medium",
-                    scope = "payroll",
-                    reference = "Payroll-wide",
-                    title = "Net-to-gross ratio changed significantly",
-                    explanation = $"The ratio of net pay to gross pay changed from {netGrossRatioPrev:P1} to {netGrossRatioCurr:P1}, indicating a shift in overall deductions.",
-                    review_suggestion = "Investigate changes in statutory rates, deductions, or allowances affecting the entire payroll."
+                    Category = AnomalyCategory.PayrollTotal,
+                    Severity = AnomalySeverity.Medium,
+                    Scope = AnomalyScope.Payroll,
+                    Reference = "Payroll-wide",
+                    Title = "Net-to-gross ratio changed significantly",
+                    Explanation = $"The ratio of net pay to gross pay changed from {netGrossRatioPrev:P1} to {netGrossRatioCurr:P1}, indicating a shift in overall deductions.",
+                    ReviewSuggestion = "Investigate changes in statutory rates, deductions, or allowances affecting the entire payroll."
                 });
             }
         }
@@ -550,13 +553,13 @@ public class PayrollAnomalyService
             var countDiff = currCount - prevCount;
             anomalies.Add(new Anomaly
             {
-                category = "Headcount",
-                severity = Math.Abs(countDiff) > 3 ? "medium" : "low",
-                scope = "payroll",
-                reference = "Payroll-wide",
-                title = $"Employee count {(countDiff > 0 ? "increased" : "decreased")} by {Math.Abs(countDiff)}",
-                explanation = $"The payroll now includes {currCount} employees compared to {prevCount} in the previous period.",
-                review_suggestion = "Verify new hires or terminations are correctly reflected in payroll."
+                Category = AnomalyCategory.Headcount,
+                Severity = Math.Abs(countDiff) > 3 ? AnomalySeverity.Medium : AnomalySeverity.Low,
+                Scope = AnomalyScope.Payroll,
+                Reference = "Payroll-wide",
+                Title = $"Employee count {(countDiff > 0 ? "increased" : "decreased")} by {Math.Abs(countDiff)}",
+                Explanation = $"The payroll now includes {currCount} employees compared to {prevCount} in the previous period.",
+                ReviewSuggestion = "Verify new hires or terminations are correctly reflected in payroll."
             });
         }
     }
@@ -565,11 +568,11 @@ public class PayrollAnomalyService
 
     #region Helper Methods
 
-    private static string DetermineSeverity(decimal amount, decimal mediumThreshold, decimal highThreshold)
+    private static AnomalySeverity DetermineSeverity(decimal amount, decimal mediumThreshold, decimal highThreshold)
     {
-        if (amount >= highThreshold) return "high";
-        if (amount >= mediumThreshold) return "medium";
-        return "low";
+        if (amount >= highThreshold) return AnomalySeverity.High;
+        if (amount >= mediumThreshold) return AnomalySeverity.Medium;
+        return AnomalySeverity.Low;
     }
 
     private static string GenerateSummary(List<Anomaly> anomalies)
@@ -579,14 +582,14 @@ public class PayrollAnomalyService
             return "No significant anomalies detected. The current payroll appears consistent with historical patterns.";
         }
 
-        var highCount = anomalies.Count(a => a.severity == "high");
-        var mediumCount = anomalies.Count(a => a.severity == "medium");
-        var lowCount = anomalies.Count(a => a.severity == "low");
+        var highCount = anomalies.Count(a => a.Severity == AnomalySeverity.High);
+        var mediumCount = anomalies.Count(a => a.Severity == AnomalySeverity.Medium);
+        var lowCount = anomalies.Count(a => a.Severity == AnomalySeverity.Low);
 
-        var employeeLevel = anomalies.Count(a => a.scope == "employee");
-        var payrollLevel = anomalies.Count(a => a.scope == "payroll");
+        var employeeLevel = anomalies.Count(a => a.Scope == AnomalyScope.Employee);
+        var payrollLevel = anomalies.Count(a => a.Scope == AnomalyScope.Payroll);
 
-        var categories = anomalies.Select(a => a.category).Distinct().ToList();
+        var categories = anomalies.Select(a => a.Category).Distinct().ToList();
 
         var parts = new List<string>();
 

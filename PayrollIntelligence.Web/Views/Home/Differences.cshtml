@@ -136,7 +136,7 @@
                     }
                     else if (Model != null)
                     {
-                        var confidenceClass = Model.confidence_level switch
+                        var confidenceClass = Model.ConfidenceLevel switch
                         {
                             "high" => "success",
                             "medium" => "warning",
@@ -144,17 +144,17 @@
                         };
 
                         <!-- Payroll Overview Section -->
-                        @if (Model.payroll_overview != null)
+                        @if (Model.PayrollOverview != null)
                         {
                             <div class="card mb-4 border-0 bg-light">
                                 <div class="card-body">
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <h5 class="mb-0"><i class="fas fa-chart-bar text-success me-2"></i>Payroll Overview</h5>
                                         <span class="badge bg-@confidenceClass">
-                                            <i class="fas fa-shield-alt me-1"></i>@Model.confidence_level.ToUpper() CONFIDENCE
+                                            <i class="fas fa-shield-alt me-1"></i>@Model.ConfidenceLevel.ToUpper() CONFIDENCE
                                         </span>
                                     </div>
-                                    <p class="lead mb-3">@Model.payroll_overview.summary</p>
+                                    <p class="lead mb-3">@Model.PayrollOverview.Summary</p>
                                     
                                     <div class="row">
                                         <div class="col-md-6 col-lg-3 mb-2">
@@ -162,7 +162,7 @@
                                                 <i class="fas fa-users text-primary me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Headcount</small>
-                                                    <div class="fw-semibold">@Model.payroll_overview.headcount_change</div>
+                                                    <div class="fw-semibold">@Model.PayrollOverview.HeadcountChange</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -171,7 +171,7 @@
                                                 <i class="fas fa-money-bill-wave text-success me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Gross Pay</small>
-                                                    <div class="fw-semibold">@Model.payroll_overview.gross_pay_trend</div>
+                                                    <div class="fw-semibold">@Model.PayrollOverview.GrossPayTrend</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -180,7 +180,7 @@
                                                 <i class="fas fa-wallet text-info me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Net Pay</small>
-                                                    <div class="fw-semibold">@Model.payroll_overview.net_pay_trend</div>
+                                                    <div class="fw-semibold">@Model.PayrollOverview.NetPayTrend</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -189,7 +189,7 @@
                                                 <i class="fas fa-building text-warning me-2"></i>
                                                 <div>
                                                     <small class="text-muted">Employer Cost</small>
-                                                    <div class="fw-semibold">@Model.payroll_overview.employer_cost_trend</div>
+                                                    <div class="fw-semibold">@Model.PayrollOverview.EmployerCostTrend</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -199,26 +199,26 @@
                         }
 
                         <!-- Change Groups Section -->
-                        @if (Model.change_groups.Any())
+                        @if (Model.ChangeGroups.Any())
                         {
                             <h5 class="mb-3"><i class="fas fa-layer-group text-primary me-2"></i>Change Groups</h5>
                             <div class="row">
-                                @foreach (var group in Model.change_groups)
+                                @foreach (var group in Model.ChangeGroups)
                                 {
                                     <div class="col-md-6 mb-4">
                                         <div class="card h-100 border-primary">
                                             <div class="card-header bg-primary text-white">
-                                                <h6 class="mb-0"><i class="fas fa-folder-open me-2"></i>@group.group_title</h6>
+                                                <h6 class="mb-0"><i class="fas fa-folder-open me-2"></i>@group.GroupTitle</h6>
                                             </div>
                                             <div class="card-body">
-                                                <p class="card-text">@group.description</p>
+                                                <p class="card-text">@group.Description</p>
                                                 
-                                                @if (group.affected_employees.Any())
+                                                @if (group.AffectedEmployees.Any())
                                                 {
                                                     <div class="mb-3">
                                                         <small class="text-muted"><strong>Affected Employees:</strong></small>
                                                         <div class="mt-1">
-                                                            @foreach (var emp in group.affected_employees)
+                                                            @foreach (var emp in group.AffectedEmployees)
                                                             {
                                                                 <span class="badge bg-light text-dark border me-1 mb-1">
                                                                     <i class="fas fa-user me-1"></i>@emp
@@ -229,7 +229,7 @@
                                                 }
                                                 
                                                 <div class="alert alert-secondary mb-0 py-2">
-                                                    <small><i class="fas fa-lightbulb me-1"></i><strong>Why it matters:</strong> @group.why_it_matters</small>
+                                                    <small><i class="fas fa-lightbulb me-1"></i><strong>Why it matters:</strong> @group.WhyItMatters</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -245,7 +245,7 @@
                         }
 
                         <!-- Attention Items Section -->
-                        @if (Model.attention_items.Any())
+                        @if (Model.AttentionItems.Any())
                         {
                             <h5 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Attention Items</h5>
                             <div class="table-responsive">
@@ -258,12 +258,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var item in Model.attention_items)
+                                        @foreach (var item in Model.AttentionItems)
                                         {
                                             <tr>
-                                                <td><strong>@item.employee</strong></td>
-                                                <td><span class="badge bg-warning text-dark">@item.issue</span></td>
-                                                <td>@item.reason</td>
+                                                <td><strong>@item.Employee</strong></td>
+                                                <td><span class="badge bg-warning text-dark">@item.Issue</span></td>
+                                                <td>@item.Reason</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -272,7 +272,7 @@
                         }
 
                         <!-- Suggested Review Actions -->
-                        @if (Model.change_groups.Any() || Model.attention_items.Any())
+                        @if (Model.ChangeGroups.Any() || Model.AttentionItems.Any())
                         {
                             <div class="card mt-4 border-primary">
                                 <div class="card-header bg-primary text-white">
@@ -281,30 +281,30 @@
                                 <div class="card-body">
                                     <p class="text-muted small mb-3">These are optional review actions to consider before approval:</p>
                                     <ul class="list-group list-group-flush">
-                                        @if (Model.attention_items.Any())
+                                        @if (Model.AttentionItems.Any())
                                         {
                                             <li class="list-group-item d-flex align-items-start">
                                                 <span class="badge bg-warning text-dark me-3 mt-1">1</span>
                                                 <div>
                                                     <strong>Review flagged employees</strong>
-                                                    <p class="mb-0 text-muted small">Confirm the @Model.attention_items.Count attention item(s) listed above are expected or have valid explanations.</p>
+                                                    <p class="mb-0 text-muted small">Confirm the @Model.AttentionItems.Count attention item(s) listed above are expected or have valid explanations.</p>
                                                 </div>
                                             </li>
                                         }
-                                        @if (Model.change_groups.Any(g => g.group_title.Contains("Leave")))
+                                        @if (Model.ChangeGroups.Any(g => g.GroupTitle.Contains("Leave")))
                                         {
                                             <li class="list-group-item d-flex align-items-start">
-                                                <span class="badge bg-info text-white me-3 mt-1">@(Model.attention_items.Any() ? "2" : "1")</span>
+                                                <span class="badge bg-info text-white me-3 mt-1">@(Model.AttentionItems.Any() ? "2" : "1")</span>
                                                 <div>
                                                     <strong>Cross-check leave records</strong>
                                                     <p class="mb-0 text-muted small">Verify leave-related changes match HR leave approval records.</p>
                                                 </div>
                                             </li>
                                         }
-                                        @if (Model.change_groups.Any(g => g.group_title.Contains("New") || g.group_title.Contains("Removed")))
+                                        @if (Model.ChangeGroups.Any(g => g.GroupTitle.Contains("New") || g.GroupTitle.Contains("Removed")))
                                         {
                                             <li class="list-group-item d-flex align-items-start">
-                                                <span class="badge bg-secondary me-3 mt-1">@(Model.attention_items.Any() ? (Model.change_groups.Any(g => g.group_title.Contains("Leave")) ? "3" : "2") : (Model.change_groups.Any(g => g.group_title.Contains("Leave")) ? "2" : "1"))</span>
+                                                <span class="badge bg-secondary me-3 mt-1">@(Model.AttentionItems.Any() ? (Model.ChangeGroups.Any(g => g.GroupTitle.Contains("Leave")) ? "3" : "2") : (Model.ChangeGroups.Any(g => g.GroupTitle.Contains("Leave")) ? "2" : "1"))</span>
                                                 <div>
                                                     <strong>Confirm workforce changes</strong>
                                                     <p class="mb-0 text-muted small">Ensure new hires or departures are correctly reflected with proper onboarding/offboarding.</p>

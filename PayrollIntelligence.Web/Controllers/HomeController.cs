@@ -192,9 +192,6 @@ public class HomeController : Controller
             _apiConfig.Value.ClientId = clientId;
             _apiConfig.Value.ClientSecret = clientSecret;
 
-            // Clear any existing authentication token since credentials have changed
-            _apiService.ClearAuthentication();
-
             // Attempt to authenticate with new credentials and capture logs
             var authLog = await _apiService.AuthenticateAsyncWithLogs(clientId, clientSecret);
 
@@ -424,97 +421,51 @@ public class HomeController : Controller
             // Build concise one-sentence summary (avoid technical terms)
             var summary = BuildConciseSummary(result);
 
-            // Extract up to 3 key change themes (simple strings) - consolidate similar themes and count unique employees
+            // Extract up to 3 key change themes (simple strings)
             var keyChanges = new List<string>();
-            
-            if (result.change_groups != null && result.change_groups.Count > 0)
+            foreach (var group in result.ChangeGroups?.Take(3) ?? Enumerable.Empty<PayrollIntelligence.Core.ChangeGroup>())
             {
-                // Group change groups by theme type and collect unique employees
-                var themeGroups = new Dictionary<string, HashSet<string>>();
-                
-                foreach (var group in result.change_groups)
+                var count = group.AffectedEmployees?.Count ?? 0;
+                var theme = group.GroupTitle switch
                 {
-                    if (group.affected_employees == null || group.affected_employees.Count == 0)
-                        continue;
-                    
-                    // Determine theme type
-                    string themeType;
-                    if (group.group_title?.Contains("Leave") == true)
-                        themeType = "Leave";
-                    else if (group.group_title?.Contains("New Employees") == true)
-                        themeType = "New Employees";
-                    else if (group.group_title?.Contains("Removed") == true)
-                        themeType = "Removed";
-                    else if (group.group_title?.Contains("Tax") == true)
-                        themeType = "Tax";
-                    else if (group.group_title?.Contains("Gross") == true)
-                        themeType = "Gross";
-                    else
-                        themeType = group.group_title ?? "Other";
-                    
-                    // Add unique employees to the theme group (HashSet automatically handles duplicates)
-                    if (!themeGroups.ContainsKey(themeType))
-                    {
-                        themeGroups[themeType] = new HashSet<string>();
-                    }
-                    
-                    foreach (var employee in group.affected_employees)
-                    {
-                        if (!string.IsNullOrWhiteSpace(employee))
-                        {
-                            themeGroups[themeType].Add(employee);
-                        }
-                    }
-                }
-                
-                // Generate consolidated messages for each theme (up to 3) using unique employee counts
-                foreach (var kvp in themeGroups.Take(3))
-                {
-                    var themeType = kvp.Key;
-                    var uniqueCount = kvp.Value.Count; // This is the unique count, not the sum
-                    
-                    var message = themeType switch
-                    {
-                        "Leave" => $"{uniqueCount} employee(s) have leave-related pay adjustments",
-                        "New Employees" => $"{uniqueCount} new team member(s) added this period",
-                        "Removed" => $"{uniqueCount} employee(s) no longer on payroll",
-                        "Tax" => $"{uniqueCount} employee(s) with updated deductions",
-                        "Gross" => $"{uniqueCount} employee(s) with pay variations",
-                        _ => $"{uniqueCount} employee(s) affected by {themeType.ToLower()}"
-                    };
-                    
-                    keyChanges.Add(message);
-                }
+                    var t when t?.Contains("Leave") == true => $"{count} employee(s) have leave-related pay adjustments",
+                    var t when t?.Contains("New Employees") == true => $"{count} new team member(s) added this period",
+                    var t when t?.Contains("Removed") == true => $"{count} employee(s) no longer on payroll",
+                    var t when t?.Contains("Tax") == true => $"{count} employee(s) with updated deductions",
+                    var t when t?.Contains("Gross") == true => $"{count} employee(s) with pay variations",
+                    _ => $"{count} employee(s) affected by {group.GroupTitle?.ToLower() ?? "changes"}"
+                };
+                keyChanges.Add(theme);
             }
 
             // Build suggested review actions (simple strings, no automatic corrections)
             var suggestedActions = new List<string>();
 
-            if (result.attention_items?.Count > 0)
+            if (result.AttentionItems?.Count > 0)
             {
-                suggestedActions.Add($"Verify {result.attention_items.Count} flagged item(s) in Risk & Review");
+                suggestedActions.Add($"Verify {result.AttentionItems.Count} flagged item(s) in Risk & Review");
             }
 
-            var leaveGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Leave") == true);
-            if (leaveGroup?.affected_employees?.Count > 0)
+            var leaveGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Leave") == true);
+            if (leaveGroup?.AffectedEmployees?.Count > 0)
             {
                 suggestedActions.Add("Confirm leave records match HR documentation");
             }
 
-            var newHiresGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("New Employees") == true);
-            if (newHiresGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var newHiresGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("New Employees") == true);
+            if (newHiresGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Check new hire details against onboarding records");
             }
 
-            var removedGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Removed") == true);
-            if (removedGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var removedGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Removed") == true);
+            if (removedGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Ensure final payments were processed correctly");
             }
 
-            var taxGroup = result.change_groups?.FirstOrDefault(g => g.group_title?.Contains("Tax") == true);
-            if (taxGroup?.affected_employees?.Count > 0 && suggestedActions.Count < 3)
+            var taxGroup = result.ChangeGroups?.FirstOrDefault(g => g.GroupTitle?.Contains("Tax") == true);
+            if (taxGroup?.AffectedEmployees?.Count > 0 && suggestedActions.Count < 3)
             {
                 suggestedActions.Add("Review deduction changes for accuracy");
             }
@@ -530,9 +481,9 @@ public class HomeController : Controller
                 summary,
                 key_changes = keyChanges,
                 suggested_actions = suggestedActions,
-                confidence_level = result.confidence_level ?? "medium",
+                confidence_level = result.ConfidenceLevel ?? "medium",
                 // Additional context for UI (not repeated in detail sections)
-                attentionCount = result.attention_items?.Count ?? 0
+                attentionCount = result.AttentionItems?.Count ?? 0
             });
         }
         catch (Exception ex)
@@ -558,15 +509,15 @@ public class HomeController : Controller
     /// </summary>
     private static string BuildConciseSummary(PayrollIntelligence.Core.KeyDifferencesResult result)
     {
-        var overview = result.payroll_overview;
+        var overview = result.PayrollOverview;
         if (overview == null)
         {
             return "Payroll analysis complete - see details below.";
         }
 
         // Determine overall direction from employer cost trend
-        var costTrend = overview.employer_cost_trend?.ToLower() ?? "";
-        var headcount = overview.headcount_change?.ToLower() ?? "";
+        var costTrend = overview.EmployerCostTrend?.ToLower() ?? "";
+        var headcount = overview.HeadcountChange?.ToLower() ?? "";
 
         var direction = costTrend switch
         {
@@ -584,8 +535,8 @@ public class HomeController : Controller
             _ => ""
         };
 
-        var changeCount = result.change_groups?.Count ?? 0;
-        var attentionCount = result.attention_items?.Count ?? 0;
+        var changeCount = result.ChangeGroups?.Count ?? 0;
+        var attentionCount = result.AttentionItems?.Count ?? 0;
 
         if (attentionCount > 0)
         {
