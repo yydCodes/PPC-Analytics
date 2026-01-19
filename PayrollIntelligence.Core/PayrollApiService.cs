@@ -61,8 +61,6 @@ public class PayrollApiService
             Console.WriteLine($"Authenticating with URL: {_apiConfig.BaseUrl}/connect/token");
 
             // Check if we already have a valid token
-            // Note: We don't check credentials here because credentials might have changed
-            // The caller should call ClearAuthentication() first if credentials changed
             if (!string.IsNullOrEmpty(_bearerToken) && _tokenExpiry.HasValue && _tokenExpiry.Value > DateTime.UtcNow.AddMinutes(5))
             {
                 log.IsSuccess = true;
@@ -316,16 +314,6 @@ public class PayrollApiService
                _tokenExpiry.Value > DateTime.UtcNow.AddMinutes(1);
     }
 
-    /// <summary>
-    /// Clears the current bearer token and forces re-authentication
-    /// This should be called when credentials are changed
-    /// </summary>
-    public void ClearAuthentication()
-    {
-        _bearerToken = null;
-        _tokenExpiry = null;
-        _httpClient.DefaultRequestHeaders.Authorization = null;
-    }
 }
 
 internal class TokenResponse

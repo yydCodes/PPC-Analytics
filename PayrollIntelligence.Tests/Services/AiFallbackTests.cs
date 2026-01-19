@@ -22,13 +22,13 @@ public class AiFallbackTests
 
         // Assert - Verify rule-based result is complete
         Assert.NotNull(result);
-        Assert.Equal("increase", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
-        Assert.NotNull(result.key_drivers);
-        Assert.NotNull(result.notable_observations);
-        Assert.NotNull(result.headline_summary);
-        Assert.NotNull(result.confidence_level);
+        Assert.Equal("increase", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.NotNull(result.KeyDrivers);
+        Assert.NotNull(result.NotableObservations);
+        Assert.NotNull(result.HeadlineSummary);
+        Assert.NotNull(result.ConfidenceLevel);
     }
 
     [Fact]
@@ -43,10 +43,10 @@ public class AiFallbackTests
 
         // Assert - Verify rule-based result is complete
         Assert.NotNull(result);
-        Assert.NotNull(result.payroll_overview);
-        Assert.NotNull(result.change_groups);
-        Assert.NotNull(result.attention_items);
-        Assert.NotNull(result.confidence_level);
+        Assert.NotNull(result.PayrollOverview);
+        Assert.NotNull(result.ChangeGroups);
+        Assert.NotNull(result.AttentionItems);
+        Assert.NotNull(result.ConfidenceLevel);
     }
 
     [Fact]
@@ -61,8 +61,8 @@ public class AiFallbackTests
 
         // Assert - Verify rule-based result is complete
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
     }
 
     [Fact]
@@ -76,13 +76,13 @@ public class AiFallbackTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - All fields that hybrid mode needs from rule-based should be present
-        Assert.NotNull(result.previous_metrics); // Used in hybrid
-        Assert.NotNull(result.current_metrics); // Used in hybrid
-        Assert.NotNull(result.notable_observations); // Used in hybrid
-        Assert.NotNull(result.direction); // Can be overridden by AI
-        Assert.NotNull(result.headline_summary); // Can be overridden by AI
-        Assert.NotNull(result.key_drivers); // Can be overridden by AI
-        Assert.NotNull(result.confidence_level); // Can be overridden by AI
+        Assert.NotNull(result.PreviousMetrics); // Used in hybrid
+        Assert.NotNull(result.CurrentMetrics); // Used in hybrid
+        Assert.NotNull(result.NotableObservations); // Used in hybrid
+        Assert.NotNull(result.Direction); // Can be overridden by AI
+        Assert.NotNull(result.HeadlineSummary); // Can be overridden by AI
+        Assert.NotNull(result.KeyDrivers); // Can be overridden by AI
+        Assert.NotNull(result.ConfidenceLevel); // Can be overridden by AI
     }
 
     [Fact]
@@ -96,10 +96,10 @@ public class AiFallbackTests
         var result = PayrollDifferencesService.AnalyzeKeyDifferences(previous, current);
 
         // Assert - All fields that hybrid mode needs from rule-based should be present
-        Assert.NotNull(result.payroll_overview); // Always used in hybrid
-        Assert.NotNull(result.attention_items); // Always used in hybrid
-        Assert.NotNull(result.change_groups); // Can be overridden by AI
-        Assert.NotNull(result.confidence_level); // Always used in hybrid
+        Assert.NotNull(result.PayrollOverview); // Always used in hybrid
+        Assert.NotNull(result.AttentionItems); // Always used in hybrid
+        Assert.NotNull(result.ChangeGroups); // Can be overridden by AI
+        Assert.NotNull(result.ConfidenceLevel); // Always used in hybrid
     }
 
     [Fact]
@@ -113,8 +113,8 @@ public class AiFallbackTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert - All fields that hybrid mode needs from rule-based should be present
-        Assert.NotNull(result.anomalies); // Can be overridden by AI
-        Assert.NotNull(result.summary); // Can be overridden by AI
+        Assert.NotNull(result.Anomalies); // Can be overridden by AI
+        Assert.NotNull(result.Summary); // Can be overridden by AI
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class AiFallbackTests
 
         // Assert - Should detect increase (cost went from 13200 to 24000, >1% change)
         Assert.NotNull(result);
-        Assert.Equal("increase", result.direction);
+        Assert.Equal("increase", result.Direction);
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public class AiFallbackTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.NotNull(result.anomalies);
-        Assert.NotNull(result.summary);
+        Assert.NotNull(result.Anomalies);
+        Assert.NotNull(result.Summary);
     }
 }

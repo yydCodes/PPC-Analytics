@@ -26,9 +26,9 @@ public class PayrollComparisonServiceHybridTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("increase", result.direction);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.previous_metrics);
+        Assert.Equal("increase", result.Direction);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.PreviousMetrics);
     }
 
     [Fact]
@@ -42,13 +42,13 @@ public class PayrollComparisonServiceHybridTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - Verify rule-based components that are used in hybrid mode
-        Assert.NotNull(result.previous_metrics);
-        Assert.NotNull(result.current_metrics);
-        Assert.NotNull(result.notable_observations);
-        Assert.Equal(10000m, result.previous_metrics.gross_pay);
-        Assert.Equal(12000m, result.current_metrics.gross_pay);
-        Assert.Equal(12000m, result.previous_metrics.employer_cost);
-        Assert.Equal(14400m, result.current_metrics.employer_cost);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.NotNull(result.CurrentMetrics);
+        Assert.NotNull(result.NotableObservations);
+        Assert.Equal(10000m, result.PreviousMetrics.GrossPay);
+        Assert.Equal(12000m, result.CurrentMetrics.GrossPay);
+        Assert.Equal(12000m, result.PreviousMetrics.EmployerCost);
+        Assert.Equal(14400m, result.CurrentMetrics.EmployerCost);
     }
 
     [Fact]
@@ -62,9 +62,9 @@ public class PayrollComparisonServiceHybridTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - Key drivers are used in hybrid mode (AI can override, but rule-based provides fallback)
-        Assert.NotNull(result.key_drivers);
-        Assert.True(result.key_drivers.Count > 0);
-        Assert.Equal("increase", result.direction);
+        Assert.NotNull(result.KeyDrivers);
+        Assert.True(result.KeyDrivers.Count > 0);
+        Assert.Equal("increase", result.Direction);
     }
 
     [Fact]
@@ -78,8 +78,8 @@ public class PayrollComparisonServiceHybridTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - Direction is used in hybrid mode
-        Assert.Equal("stable", result.direction);
-        Assert.NotNull(result.headline_summary);
+        Assert.Equal("stable", result.Direction);
+        Assert.NotNull(result.HeadlineSummary);
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class PayrollComparisonServiceHybridTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - Notable observations are rule-based and used in hybrid mode
-        Assert.NotNull(result.notable_observations);
+        Assert.NotNull(result.NotableObservations);
         // Notable observations may be empty or contain observations
     }
 
@@ -108,8 +108,8 @@ public class PayrollComparisonServiceHybridTests
         var result = PayrollComparisonService.Compare(previous, current, "Previous", "Current");
 
         // Assert - Confidence level can be overridden by AI in hybrid mode
-        Assert.NotNull(result.confidence_level);
-        Assert.Contains(result.confidence_level, new[] { "high", "medium", "low" });
+        Assert.NotNull(result.ConfidenceLevel);
+        Assert.Contains(result.ConfidenceLevel, new[] { "high", "medium", "low" });
     }
 
     [Fact]
@@ -118,13 +118,13 @@ public class PayrollComparisonServiceHybridTests
         // Arrange
         var previous = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
         var current = new PayrollData
         {
-            employeePayrolls = new List<EmployeePayroll>(),
-            totals = new PayrollTotals { gross = 0, net = 0, cost = 0 }
+            EmployeePayrolls = new List<EmployeePayroll>(),
+            Totals = new PayrollTotals { Gross = 0, Net = 0, Cost = 0 }
         };
 
         // Act
@@ -132,8 +132,8 @@ public class PayrollComparisonServiceHybridTests
 
         // Assert - Should handle gracefully for hybrid mode
         Assert.NotNull(result);
-        Assert.NotNull(result.direction);
-        Assert.NotNull(result.previous_metrics);
-        Assert.NotNull(result.current_metrics);
+        Assert.NotNull(result.Direction);
+        Assert.NotNull(result.PreviousMetrics);
+        Assert.NotNull(result.CurrentMetrics);
     }
 }

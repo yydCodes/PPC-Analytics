@@ -23,8 +23,6 @@ public class PayrollAnomalyService
         _aiService = aiService;
     }
 
-    // ... existing DetectAnomaliesAsync method ...
-
     /// <summary>
     /// Detects anomalies by comparing current payroll against a previous period.
     /// Uses AI if available, otherwise falls back to rule-based detection.
@@ -158,34 +156,6 @@ public class PayrollAnomalyService
             {
                 context.AppendLine($"- {empName}: {string.Join("; ", changes)}");
             }
-        }
-
-        return context.ToString();
-    }
-
-    private string BuildAnomalyContext(List<Anomaly> anomalies, PayrollData previous, PayrollData current)
-    {
-        var context = new System.Text.StringBuilder();
-        context.AppendLine("Payroll Risk Signals Detected:");
-        context.AppendLine();
-
-        foreach (var anomaly in anomalies)
-        {
-            context.AppendLine($"- [{anomaly.Severity.ToString().ToUpper()}] {anomaly.Scope}: {anomaly.Reference}");
-            context.AppendLine($"  Issue: {anomaly.Title}");
-            context.AppendLine($"  Details: {anomaly.Explanation}");
-            context.AppendLine();
-        }
-
-        // Add summary statistics
-        var prevTotal = previous.Totals;
-        var currTotal = current.Totals;
-        if (prevTotal != null && currTotal != null)
-        {
-            context.AppendLine("Payroll Summary:");
-            context.AppendLine($"Previous Period: Gross={prevTotal.Gross:N2}, Net={prevTotal.Net:N2}, Cost={prevTotal.Cost:N2}");
-            context.AppendLine($"Current Period: Gross={currTotal.Gross:N2}, Net={currTotal.Net:N2}, Cost={currTotal.Cost:N2}");
-            context.AppendLine($"Employee Count: Previous={previous.EmployeePayrolls?.Count ?? 0}, Current={current.EmployeePayrolls?.Count ?? 0}");
         }
 
         return context.ToString();

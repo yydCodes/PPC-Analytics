@@ -16,13 +16,6 @@ public class PayrollAnalysisService
     private readonly ApiConfiguration? _apiConfig;
 
     /// <summary>
-    /// Default constructor for backward compatibility with static methods.
-    /// </summary>
-    public PayrollAnalysisService()
-    {
-    }
-
-    /// <summary>
     /// Constructor with all required dependencies.
     /// </summary>
     public PayrollAnalysisService(
@@ -58,17 +51,6 @@ public class PayrollAnalysisService
             currentYear, currentMonth);
     }
 
-    /// <summary>
-    /// Static method for comparing two payroll periods.
-    /// </summary>
-    public static PayrollComparisonResult AnalyzePayrollComparison(
-        PayrollData previous, 
-        PayrollData current,
-        string previousPeriodName = "Previous Period",
-        string currentPeriodName = "Current Period")
-    {
-        return PayrollComparisonService.Compare(previous, current, previousPeriodName, currentPeriodName);
-    }
 
     #endregion
 
@@ -145,32 +127,6 @@ public class PayrollAnalysisService
         // Use the most recent historical period for comparison
         var previous = historical.Last();
         return PayrollAnomalyService.DetectAnomalies(previous, current);
-    }
-
-    #endregion
-
-    #region Private Methods
-
-    private async Task EnsureAuthenticatedAsync()
-    {
-        if (_apiService == null)
-        {
-            throw new InvalidOperationException("API service not configured.");
-        }
-
-        if (_apiConfig == null || !_apiConfig.IsValid())
-        {
-            throw new InvalidOperationException("API configuration is incomplete.");
-        }
-
-        if (!_apiService.IsAuthenticated())
-        {
-            var success = await _apiService.AuthenticateAsync(_apiConfig.ClientId, _apiConfig.ClientSecret);
-            if (!success)
-            {
-                throw new InvalidOperationException("Failed to authenticate with payroll API.");
-            }
-        }
     }
 
     #endregion

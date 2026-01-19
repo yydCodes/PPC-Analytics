@@ -19,8 +19,8 @@ public class PayrollAnalysisServiceTests
         var previous = TestDataHelper.CreateSamplePayrollData(3, grossPay: 10000m, employerCost: 12000m);
         var current = TestDataHelper.CreateSamplePayrollData(3, grossPay: 12000m, employerCost: 14400m);
 
-        // Act
-        var result = PayrollAnalysisService.AnalyzePayrollComparison(previous, current);
+        // Act - Use the underlying service method directly
+        var result = PayrollComparisonService.Compare(previous, current, "Previous Period", "Current Period");
 
         // Assert
         Assert.NotNull(result);

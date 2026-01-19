@@ -50,7 +50,15 @@ builder.Services.AddScoped<PayrollAnomalyService>(sp =>
 });
 
 // Register the facade service (uses the individual services)
-builder.Services.AddScoped<PayrollAnalysisService>();
+builder.Services.AddScoped<PayrollAnalysisService>(sp =>
+{
+    var apiService = sp.GetRequiredService<PayrollApiService>();
+    var apiConfig = sp.GetRequiredService<IOptions<ApiConfiguration>>();
+    var comparisonService = sp.GetRequiredService<PayrollComparisonService>();
+    var differencesService = sp.GetRequiredService<PayrollDifferencesService>();
+    var anomalyService = sp.GetRequiredService<PayrollAnomalyService>();
+    return new PayrollAnalysisService(apiService, apiConfig, comparisonService, differencesService, anomalyService);
+});
 
 var app = builder.Build();
 

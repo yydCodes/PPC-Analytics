@@ -41,14 +41,14 @@ public class PayrollDifferencesService
             throw new InvalidOperationException("Failed to retrieve payroll data from API");
         }
 
-        return await AnalyzeKeyDifferencesWithConditionalAIAsync(previous, current);
+        return await AnalyzeKeyDifferencesWithConditionalAiAsync(previous, current);
     }
 
     /// <summary>
     /// Analyzes key differences with conditional AI or rule-based reasoning.
     /// Uses AI if available, otherwise falls back to rule-based analysis.
     /// </summary>
-    private async Task<KeyDifferencesResult> AnalyzeKeyDifferencesWithConditionalAIAsync(PayrollData previous, PayrollData current)
+    private async Task<KeyDifferencesResult> AnalyzeKeyDifferencesWithConditionalAiAsync(PayrollData previous, PayrollData current)
     {
         // Check if AI service is available and valid
         if (IsAiAvailable())
@@ -105,7 +105,7 @@ public class PayrollDifferencesService
         result.AttentionItems = ruleBasedResult.AttentionItems;
         result.PayrollOverview = ruleBasedResult.PayrollOverview;
         result.ConfidenceLevel = ruleBasedResult.ConfidenceLevel;
-        result.ChangeGroups = ruleBasedResult.ChangeGroups;
+        // Note: AI-generated change groups are kept, not overwritten with rule-based ones
         
         return result;
     }
@@ -419,7 +419,7 @@ public class PayrollDifferencesService
             {
                 var empName = currEmp.EmployeeName ?? currEmp.EmployeeNumber ?? "Unknown";
                 // Only add if not already in attention items
-                if (!attentionItems.Any(a => a.Employee == empName))
+                if (attentionItems.All(a => a.Employee != empName))
                 {
                     // Check if this is a new error (not present in previous)
                     EmployeePayroll? prevEmp = null;
