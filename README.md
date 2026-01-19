@@ -361,17 +361,72 @@ PPC-Analytics/
 │   ├── Services/
 │   │   ├── PayrollComparisonService.cs
 │   │   ├── PayrollDifferencesService.cs
-│   │   └── PayrollAnomalyService.cs
-│   ├── PayrollModels.cs
+│   │   ├── PayrollAnomalyService.cs
+│   │   └── AiReasoningService.cs
+│   ├── Models/                     # Data models and DTOs
+│   │   ├── ApiConfiguration.cs
+│   │   ├── Anomaly.cs
+│   │   ├── AnomalyCategory.cs
+│   │   ├── AnomalyDetectionResult.cs
+│   │   ├── AnomalyScope.cs
+│   │   ├── AnomalySeverity.cs
+│   │   ├── ApiRequestLog.cs
+│   │   ├── AttentionItem.cs
+│   │   ├── ChangeGroup.cs
+│   │   ├── EmployeePayroll.cs
+│   │   ├── KeyDifference.cs
+│   │   ├── KeyDifferencesResult.cs
+│   │   ├── LeavePayPayrollItem.cs
+│   │   ├── PayrollComparisonResult.cs
+│   │   ├── PayrollData.cs
+│   │   ├── PayrollError.cs
+│   │   ├── PayrollItem.cs
+│   │   ├── PayrollMetrics.cs
+│   │   ├── PayrollOverview.cs
+│   │   ├── PayrollTotals.cs
+│   │   ├── PayrollYearItem.cs
+│   │   ├── PayrollYearResponse.cs
+│   │   ├── StatutoryContribution.cs
+│   │   └── UnpaidLeavePayrollItem.cs
+│   ├── AiConfiguration.cs
 │   ├── PayrollApiService.cs
 │   ├── PayrollAnalysisService.cs
-│   └── ApiConfiguration.cs
+│   └── PayrollIntelligence.Core.csproj
 ├── PayrollIntelligence.Web/        # ASP.NET Core Web Application
 │   ├── Controllers/
+│   │   └── HomeController.cs
 │   ├── Views/
-│   └── wwwroot/
+│   │   ├── Home/
+│   │   └── Shared/
+│   ├── Models/
+│   │   └── ErrorViewModel.cs
+│   ├── wwwroot/
+│   │   ├── css/
+│   │   └── js/
+│   ├── Program.cs
+│   ├── appsettings.json
+│   ├── libman.json
+│   ├── Properties/
+│   └── PayrollIntelligence.Web.csproj
+├── PayrollIntelligence.Tests/     # Unit tests
+│   ├── Services/
+│   │   ├── PayrollAnalysisServiceTests.cs
+│   │   ├── PayrollAnomalyServiceTests.cs
+│   │   ├── PayrollAnomalyServiceHybridTests.cs
+│   │   ├── PayrollComparisonServiceTests.cs
+│   │   ├── PayrollComparisonServiceHybridTests.cs
+│   │   ├── PayrollDifferencesServiceTests.cs
+│   │   ├── PayrollDifferencesServiceHybridTests.cs
+│   │   └── AiFallbackTests.cs
+│   ├── Helpers/
+│   │   ├── MockAiReasoningService.cs
+│   │   └── TestDataHelper.cs
+│   ├── README.md
+│   └── PayrollIntelligence.Tests.csproj
+├── PayrollIntelligence.sln        # Solution file
 ├── Dockerfile
 ├── docker-compose.yml
+├── .gitignore
 └── README.md
 ```
 
