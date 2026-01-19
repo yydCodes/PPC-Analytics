@@ -5,19 +5,19 @@ namespace PayrollIntelligence.Core;
 public class KeyDifferencesResult
 {
     // Legacy field for backward compatibility
-    [JsonPropertyName("key_differences")]
+    [JsonPropertyName("KeyDifferences")]
     public List<KeyDifference> KeyDifferences { get; set; } = new();
     
     // New detailed format
-    [JsonPropertyName("payroll_overview")]
+    [JsonPropertyName("PayrollOverview")]
     public PayrollOverview? PayrollOverview { get; set; }
     
-    [JsonPropertyName("change_groups")]
+    [JsonPropertyName("ChangeGroups")]
     public List<ChangeGroup> ChangeGroups { get; set; } = new();
     
-    [JsonPropertyName("attention_items")]
+    [JsonPropertyName("AttentionItems")]
     public List<AttentionItem> AttentionItems { get; set; } = new();
     
-    [JsonPropertyName("confidence_level")]
+    [JsonPropertyName("ConfidenceLevel")]
     public string ConfidenceLevel { get; set; } = "";
 }

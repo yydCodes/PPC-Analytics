@@ -4,15 +4,15 @@ namespace PayrollIntelligence.Core;
 
 public class ChangeGroup
 {
-    [JsonPropertyName("group_title")]
+    [JsonPropertyName("GroupTitle")]
     public string GroupTitle { get; set; } = "";
     
-    [JsonPropertyName("description")]
+    [JsonPropertyName("Description")]
     public string Description { get; set; } = "";
     
-    [JsonPropertyName("affected_employees")]
+    [JsonPropertyName("AffectedEmployees")]
     public List<string> AffectedEmployees { get; set; } = new();
     
-    [JsonPropertyName("why_it_matters")]
+    [JsonPropertyName("WhyItMatters")]
     public string WhyItMatters { get; set; } = "";
 }

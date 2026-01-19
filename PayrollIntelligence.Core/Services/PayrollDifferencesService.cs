@@ -98,14 +98,14 @@ public class PayrollDifferencesService
         var result = new KeyDifferencesResult();
         
         // Use AI-generated change groups
-        result.change_groups = aiChangeGroups;
+        result.ChangeGroups = aiChangeGroups;
         
         // Still use rule-based for attention items and overview (not covered by AI)
         var ruleBasedResult = AnalyzeKeyDifferences(previous, current);
-        result.attention_items = ruleBasedResult.attention_items;
-        result.payroll_overview = ruleBasedResult.payroll_overview;
-        result.confidence_level = ruleBasedResult.confidence_level;
-        result.key_differences = ruleBasedResult.key_differences;
+        result.AttentionItems = ruleBasedResult.AttentionItems;
+        result.PayrollOverview = ruleBasedResult.PayrollOverview;
+        result.ConfidenceLevel = ruleBasedResult.ConfidenceLevel;
+        result.ChangeGroups = ruleBasedResult.ChangeGroups;
         
         return result;
     }
@@ -120,19 +120,19 @@ public class PayrollDifferencesService
         context.AppendLine("Employee-level payroll change facts:");
         context.AppendLine();
 
-        var prevEmployees = previous.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var prevEmployees = previous.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
 
-        var currEmployees = current.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var currEmployees = current.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
 
         // List all employees with changes
-        foreach (var currEmp in current.employeePayrolls ?? new List<EmployeePayroll>())
+        foreach (var currEmp in current.EmployeePayrolls ?? new List<EmployeePayroll>())
         {
-            var empName = currEmp.employeeName ?? currEmp.employeeNumber ?? "Unknown";
-            var empId = currEmp.employeeId ?? "";
+            var empName = currEmp.EmployeeName ?? currEmp.EmployeeNumber ?? "Unknown";
+            var empId = currEmp.EmployeeId ?? "";
 
             if (string.IsNullOrEmpty(empId)) continue;
 
@@ -147,8 +147,8 @@ public class PayrollDifferencesService
             var changes = new List<string>();
 
             // Gross pay change
-            var prevGross = prevEmp.statutoryContribution?.gross ?? 0;
-            var currGross = currEmp.statutoryContribution?.gross ?? 0;
+            var prevGross = prevEmp.StatutoryContribution?.Gross ?? 0;
+            var currGross = currEmp.StatutoryContribution?.Gross ?? 0;
             var grossDiff = currGross - prevGross;
             if (Math.Abs(grossDiff) > 10)
             {
@@ -156,8 +156,8 @@ public class PayrollDifferencesService
             }
 
             // Net pay change
-            var prevNet = prevEmp.statutoryContribution?.net ?? 0;
-            var currNet = currEmp.statutoryContribution?.net ?? 0;
+            var prevNet = prevEmp.StatutoryContribution?.Net ?? 0;
+            var currNet = currEmp.StatutoryContribution?.Net ?? 0;
             var netDiff = currNet - prevNet;
             if (Math.Abs(netDiff) > 10)
             {
@@ -165,23 +165,23 @@ public class PayrollDifferencesService
             }
 
             // Leave changes
-            var prevLeavePay = prevEmp.leavePayPayrollItem?.amount ?? 0;
-            var currLeavePay = currEmp.leavePayPayrollItem?.amount ?? 0;
+            var prevLeavePay = prevEmp.LeavePayPayrollItem?.Amount ?? 0;
+            var currLeavePay = currEmp.LeavePayPayrollItem?.Amount ?? 0;
             if (Math.Abs(prevLeavePay - currLeavePay) > 10)
             {
                 changes.Add($"Leave pay changed from {prevLeavePay:N2} to {currLeavePay:N2}");
             }
 
-            var prevUnpaid = prevEmp.unpaidLeavePayrollItems?.Sum(u => u.amount) ?? 0;
-            var currUnpaid = currEmp.unpaidLeavePayrollItems?.Sum(u => u.amount) ?? 0;
+            var prevUnpaid = prevEmp.UnpaidLeavePayrollItems?.Sum(u => u.Amount) ?? 0;
+            var currUnpaid = currEmp.UnpaidLeavePayrollItems?.Sum(u => u.Amount) ?? 0;
             if (Math.Abs(prevUnpaid - currUnpaid) > 10)
             {
                 changes.Add($"Unpaid leave deduction changed from {prevUnpaid:N2} to {currUnpaid:N2}");
             }
 
             // MTD changes
-            var prevMtd = prevEmp.statutoryContribution?.employeeMtd ?? 0;
-            var currMtd = currEmp.statutoryContribution?.employeeMtd ?? 0;
+            var prevMtd = prevEmp.StatutoryContribution?.EmployeeMtd ?? 0;
+            var currMtd = currEmp.StatutoryContribution?.EmployeeMtd ?? 0;
             if (Math.Abs(currMtd - prevMtd) > 50)
             {
                 changes.Add($"Tax deduction (MTD) changed from {prevMtd:N2} to {currMtd:N2}");
@@ -199,7 +199,7 @@ public class PayrollDifferencesService
             if (!currEmployees.ContainsKey(prevEmpId))
             {
                 var prevEmp = prevEmployees[prevEmpId];
-                var empName = prevEmp.employeeName ?? prevEmp.employeeNumber ?? "Unknown";
+                var empName = prevEmp.EmployeeName ?? prevEmp.EmployeeNumber ?? "Unknown";
                 context.AppendLine($"- {empName}: Removed from payroll");
             }
         }

@@ -5,18 +5,18 @@ namespace PayrollIntelligence.Core;
 // New detailed Detailed Changes models
 public class PayrollOverview
 {
-    [JsonPropertyName("summary")]
+    [JsonPropertyName("Summary")]
     public string Summary { get; set; } = "";
     
-    [JsonPropertyName("headcount_change")]
+    [JsonPropertyName("HeadcountChange")]
     public string HeadcountChange { get; set; } = "";
     
-    [JsonPropertyName("gross_pay_trend")]
+    [JsonPropertyName("GrossPayTrend")]
     public string GrossPayTrend { get; set; } = "";
     
-    [JsonPropertyName("net_pay_trend")]
+    [JsonPropertyName("NetPayTrend")]
     public string NetPayTrend { get; set; } = "";
     
-    [JsonPropertyName("employer_cost_trend")]
+    [JsonPropertyName("EmployerCostTrend")]
     public string EmployerCostTrend { get; set; } = "";
 }

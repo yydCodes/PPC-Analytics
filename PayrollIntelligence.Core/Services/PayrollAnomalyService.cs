@@ -47,13 +47,17 @@ public class PayrollAnomalyService
                     // Convert AI review items to Anomaly format
                     var aiAnomalies = aiReview.ReviewItems.Select(item => new Anomaly
                     {
-                        category = "AI Review",
-                        severity = item.Severity ?? "medium",
-                        scope = item.Scope ?? "employee",
-                        reference = item.Reference ?? "",
-                        title = item.Title ?? "",
-                        explanation = item.Explanation ?? "",
-                        review_suggestion = item.ReviewSuggestion ?? ""
+                        Category = AnomalyCategory.PayrollItems, // Default category for AI review
+                        Severity = Enum.TryParse<AnomalySeverity>(item.Severity ?? "medium", true, out var severity) 
+                            ? severity 
+                            : AnomalySeverity.Medium,
+                        Scope = Enum.TryParse<AnomalyScope>(item.Scope ?? "employee", true, out var scope) 
+                            ? scope 
+                            : AnomalyScope.Employee,
+                        Reference = item.Reference ?? "",
+                        Title = item.Title ?? "",
+                        Explanation = item.Explanation ?? "",
+                        ReviewSuggestion = item.ReviewSuggestion ?? ""
                     }).ToList();
 
                     // Generate summary
@@ -63,9 +67,8 @@ public class PayrollAnomalyService
 
                     return new AnomalyDetectionResult
                     {
-                        anomalies = aiAnomalies,
-                        summary = summary,
-                        ai_insight = aiReview.OverallAssessment
+                        Anomalies = aiAnomalies,
+                        Summary = summary
                     };
                 }
             }
@@ -98,26 +101,26 @@ public class PayrollAnomalyService
         context.AppendLine();
 
         // Add summary statistics
-        var prevTotal = previous.totals;
-        var currTotal = current.totals;
+        var prevTotal = previous.Totals;
+        var currTotal = current.Totals;
         if (prevTotal != null && currTotal != null)
         {
             context.AppendLine("Payroll Summary:");
-            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
-            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
-            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+            context.AppendLine($"Previous Period: Gross={prevTotal.Gross:N2}, Net={prevTotal.Net:N2}, Cost={prevTotal.Cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.Gross:N2}, Net={currTotal.Net:N2}, Cost={currTotal.Cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.EmployeePayrolls?.Count ?? 0}, Current={current.EmployeePayrolls?.Count ?? 0}");
             context.AppendLine();
         }
 
         // Add employee-level changes that might indicate anomalies
-        var prevEmployees = previous.employeePayrolls?
-            .Where(e => !string.IsNullOrEmpty(e.employeeId))
-            .ToDictionary(e => e.employeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
+        var prevEmployees = previous.EmployeePayrolls?
+            .Where(e => !string.IsNullOrEmpty(e.EmployeeId))
+            .ToDictionary(e => e.EmployeeId!, e => e) ?? new Dictionary<string, EmployeePayroll>();
 
-        foreach (var currEmp in current.employeePayrolls ?? new List<EmployeePayroll>())
+        foreach (var currEmp in current.EmployeePayrolls ?? new List<EmployeePayroll>())
         {
-            var empName = currEmp.employeeName ?? currEmp.employeeNumber ?? "Unknown";
-            var empId = currEmp.employeeId ?? "";
+            var empName = currEmp.EmployeeName ?? currEmp.EmployeeNumber ?? "Unknown";
+            var empId = currEmp.EmployeeId ?? "";
 
             if (string.IsNullOrEmpty(empId) || !prevEmployees.TryGetValue(empId, out var prevEmp))
                 continue;
@@ -125,10 +128,10 @@ public class PayrollAnomalyService
             var changes = new List<string>();
 
             // Net pay vs salary consistency
-            var prevNet = prevEmp.statutoryContribution?.net ?? 0;
-            var currNet = currEmp.statutoryContribution?.net ?? 0;
-            var prevBaseSalary = prevEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
-            var currBaseSalary = currEmp.payrollItems?.Where(pi => !pi.isDeduction).Sum(pi => pi.amount ?? 0) ?? 0;
+            var prevNet = prevEmp.StatutoryContribution?.Net ?? 0;
+            var currNet = currEmp.StatutoryContribution?.Net ?? 0;
+            var prevBaseSalary = prevEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
+            var currBaseSalary = currEmp.PayrollItems?.Where(pi => !pi.IsDeduction).Sum(pi => pi.Amount ?? 0) ?? 0;
 
             if (Math.Abs(currNet - prevNet) > 50 && Math.Abs(currBaseSalary - prevBaseSalary) < 1)
             {
@@ -136,16 +139,16 @@ public class PayrollAnomalyService
             }
 
             // Leave changes
-            var prevUnpaid = prevEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
-            var currUnpaid = currEmp.unpaidLeavePayrollItems?.Sum(ul => ul.amount) ?? 0;
+            var prevUnpaid = prevEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
+            var currUnpaid = currEmp.UnpaidLeavePayrollItems?.Sum(ul => ul.Amount) ?? 0;
             if (Math.Abs(prevUnpaid - currUnpaid) > 10)
             {
                 changes.Add($"Unpaid leave changed from {prevUnpaid:N2} to {currUnpaid:N2}");
             }
 
             // Statutory changes
-            var prevMtd = prevEmp.statutoryContribution?.employeeMtd ?? 0;
-            var currMtd = currEmp.statutoryContribution?.employeeMtd ?? 0;
+            var prevMtd = prevEmp.StatutoryContribution?.EmployeeMtd ?? 0;
+            var currMtd = currEmp.StatutoryContribution?.EmployeeMtd ?? 0;
             if (Math.Abs(currMtd - prevMtd) > 100)
             {
                 changes.Add($"Tax deduction (MTD) changed by {Math.Abs(currMtd - prevMtd):N2}");
@@ -168,21 +171,21 @@ public class PayrollAnomalyService
 
         foreach (var anomaly in anomalies)
         {
-            context.AppendLine($"- [{anomaly.severity.ToUpper()}] {anomaly.scope}: {anomaly.reference}");
-            context.AppendLine($"  Issue: {anomaly.title}");
-            context.AppendLine($"  Details: {anomaly.explanation}");
+            context.AppendLine($"- [{anomaly.Severity.ToString().ToUpper()}] {anomaly.Scope}: {anomaly.Reference}");
+            context.AppendLine($"  Issue: {anomaly.Title}");
+            context.AppendLine($"  Details: {anomaly.Explanation}");
             context.AppendLine();
         }
 
         // Add summary statistics
-        var prevTotal = previous.totals;
-        var currTotal = current.totals;
+        var prevTotal = previous.Totals;
+        var currTotal = current.Totals;
         if (prevTotal != null && currTotal != null)
         {
             context.AppendLine("Payroll Summary:");
-            context.AppendLine($"Previous Period: Gross={prevTotal.gross:N2}, Net={prevTotal.net:N2}, Cost={prevTotal.cost:N2}");
-            context.AppendLine($"Current Period: Gross={currTotal.gross:N2}, Net={currTotal.net:N2}, Cost={currTotal.cost:N2}");
-            context.AppendLine($"Employee Count: Previous={previous.employeePayrolls?.Count ?? 0}, Current={current.employeePayrolls?.Count ?? 0}");
+            context.AppendLine($"Previous Period: Gross={prevTotal.Gross:N2}, Net={prevTotal.Net:N2}, Cost={prevTotal.Cost:N2}");
+            context.AppendLine($"Current Period: Gross={currTotal.Gross:N2}, Net={currTotal.Net:N2}, Cost={currTotal.Cost:N2}");
+            context.AppendLine($"Employee Count: Previous={previous.EmployeePayrolls?.Count ?? 0}, Current={current.EmployeePayrolls?.Count ?? 0}");
         }
 
         return context.ToString();

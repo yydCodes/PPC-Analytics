@@ -4,18 +4,18 @@ namespace PayrollIntelligence.Core;
 
 public class PayrollMetrics
 {
-    [JsonPropertyName("net_pay")]
+    [JsonPropertyName("NetPay")]
     public decimal NetPay { get; set; }
     
-    [JsonPropertyName("gross_pay")]
+    [JsonPropertyName("GrossPay")]
     public decimal GrossPay { get; set; }
     
-    [JsonPropertyName("employer_cost")]
+    [JsonPropertyName("EmployerCost")]
     public decimal EmployerCost { get; set; }
     
-    [JsonPropertyName("headcount")]
+    [JsonPropertyName("Headcount")]
     public int Headcount { get; set; }
     
-    [JsonPropertyName("period_name")]
+    [JsonPropertyName("PeriodName")]
     public string PeriodName { get; set; } = "";
 }

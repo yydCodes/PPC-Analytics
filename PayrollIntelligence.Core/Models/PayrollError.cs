@@ -4,6 +4,6 @@ namespace PayrollIntelligence.Core;
 
 public class PayrollError
 {
-    [JsonPropertyName("message")]
+    [JsonPropertyName("Message")]
     public string? Message { get; set; }
 }

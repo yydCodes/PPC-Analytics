@@ -4,63 +4,63 @@ namespace PayrollIntelligence.Core;
 
 public class EmployeePayroll
 {
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")]
     public string? Id { get; set; }
     
-    [JsonPropertyName("employeeId")]
+    [JsonPropertyName("EmployeeId")]
     public string? EmployeeId { get; set; }
     
-    [JsonPropertyName("isIncludedInPayroll")]
+    [JsonPropertyName("IsIncludedInPayroll")]
     public bool IsIncludedInPayroll { get; set; }
     
-    [JsonPropertyName("employeeName")]
+    [JsonPropertyName("EmployeeName")]
     public string? EmployeeName { get; set; }
     
-    [JsonPropertyName("employeePosition")]
+    [JsonPropertyName("EmployeePosition")]
     public object? EmployeePosition { get; set; }
     
-    [JsonPropertyName("employeeNumber")]
+    [JsonPropertyName("EmployeeNumber")]
     public string? EmployeeNumber { get; set; }
     
-    [JsonPropertyName("employeeWorkerStatus")]
+    [JsonPropertyName("EmployeeWorkerStatus")]
     public int EmployeeWorkerStatus { get; set; }
     
-    [JsonPropertyName("unpaidLeaveDays")]
+    [JsonPropertyName("UnpaidLeaveDays")]
     public decimal UnpaidLeaveDays { get; set; }
     
-    [JsonPropertyName("leavePayDays")]
+    [JsonPropertyName("LeavePayDays")]
     public decimal LeavePayDays { get; set; }
     
-    [JsonPropertyName("payrollPolicyId")]
+    [JsonPropertyName("PayrollPolicyId")]
     public string? PayrollPolicyId { get; set; }
     
-    [JsonPropertyName("scheduleId")]
+    [JsonPropertyName("ScheduleId")]
     public string? ScheduleId { get; set; }
     
-    [JsonPropertyName("showAutoArrearsOption")]
+    [JsonPropertyName("ShowAutoArrearsOption")]
     public bool ShowAutoArrearsOption { get; set; }
     
-    [JsonPropertyName("showPreviousMonthPayrollItemsOption")]
+    [JsonPropertyName("ShowPreviousMonthPayrollItemsOption")]
     public bool ShowPreviousMonthPayrollItemsOption { get; set; }
     
-    [JsonPropertyName("employeeSalaryPeriod")]
+    [JsonPropertyName("EmployeeSalaryPeriod")]
     public int EmployeeSalaryPeriod { get; set; }
     
-    [JsonPropertyName("statutoryContribution")]
+    [JsonPropertyName("StatutoryContribution")]
     public StatutoryContribution? StatutoryContribution { get; set; }
     
-    [JsonPropertyName("payrollItems")]
+    [JsonPropertyName("PayrollItems")]
     public List<PayrollItem>? PayrollItems { get; set; }
     
-    [JsonPropertyName("unpaidLeavePayrollItems")]
+    [JsonPropertyName("UnpaidLeavePayrollItems")]
     public List<UnpaidLeavePayrollItem>? UnpaidLeavePayrollItems { get; set; }
     
-    [JsonPropertyName("leavePayPayrollItem")]
+    [JsonPropertyName("LeavePayPayrollItem")]
     public LeavePayPayrollItem? LeavePayPayrollItem { get; set; }
     
-    [JsonPropertyName("error")]
+    [JsonPropertyName("Error")]
     public PayrollError? Error { get; set; }
     
-    [JsonPropertyName("approvedEmployeeState")]
+    [JsonPropertyName("ApprovedEmployeeState")]
     public object? ApprovedEmployeeState { get; set; }
 }

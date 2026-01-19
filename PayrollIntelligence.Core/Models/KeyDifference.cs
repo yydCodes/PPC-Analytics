@@ -4,12 +4,12 @@ namespace PayrollIntelligence.Core;
 
 public class KeyDifference
 {
-    [JsonPropertyName("title")]
+    [JsonPropertyName("Title")]
     public string Title { get; set; } = "";
     
-    [JsonPropertyName("explanation")]
+    [JsonPropertyName("Explanation")]
     public string Explanation { get; set; } = "";
     
-    [JsonPropertyName("affected_area")]
+    [JsonPropertyName("AffectedArea")]
     public string AffectedArea { get; set; } = "";
 }

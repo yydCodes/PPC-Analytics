@@ -4,42 +4,42 @@ namespace PayrollIntelligence.Core;
 
 public class StatutoryContribution
 {
-    [JsonPropertyName("net")]
+    [JsonPropertyName("Net")]
     public decimal Net { get; set; }
     
-    [JsonPropertyName("cost")]
+    [JsonPropertyName("Cost")]
     public decimal Cost { get; set; }
     
-    [JsonPropertyName("gross")]
+    [JsonPropertyName("Gross")]
     public decimal Gross { get; set; }
     
-    [JsonPropertyName("employeeMtd")]
+    [JsonPropertyName("EmployeeMtd")]
     public decimal EmployeeMtd { get; set; }
     
-    [JsonPropertyName("employeeEpf")]
+    [JsonPropertyName("EmployeeEpf")]
     public decimal EmployeeEpf { get; set; }
     
-    [JsonPropertyName("employerEpf")]
+    [JsonPropertyName("EmployerEpf")]
     public decimal EmployerEpf { get; set; }
     
-    [JsonPropertyName("employeeEis")]
+    [JsonPropertyName("EmployeeEis")]
     public decimal EmployeeEis { get; set; }
     
-    [JsonPropertyName("employerEis")]
+    [JsonPropertyName("EmployerEis")]
     public decimal EmployerEis { get; set; }
     
-    [JsonPropertyName("employerHrdf")]
+    [JsonPropertyName("EmployerHrdf")]
     public decimal EmployerHrdf { get; set; }
     
-    [JsonPropertyName("employeeSocso")]
+    [JsonPropertyName("EmployeeSocso")]
     public decimal EmployeeSocso { get; set; }
     
-    [JsonPropertyName("employerSocso")]
+    [JsonPropertyName("EmployerSocso")]
     public decimal EmployerSocso { get; set; }
     
-    [JsonPropertyName("zakat")]
+    [JsonPropertyName("Zakat")]
     public decimal Zakat { get; set; }
     
-    [JsonPropertyName("cp38")]
+    [JsonPropertyName("Cp38")]
     public decimal Cp38 { get; set; }
 }

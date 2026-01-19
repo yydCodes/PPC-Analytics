@@ -4,12 +4,12 @@ namespace PayrollIntelligence.Core;
 
 public class AttentionItem
 {
-    [JsonPropertyName("employee")]
+    [JsonPropertyName("Employee")]
     public string Employee { get; set; } = "";
     
-    [JsonPropertyName("issue")]
+    [JsonPropertyName("Issue")]
     public string Issue { get; set; } = "";
     
-    [JsonPropertyName("reason")]
+    [JsonPropertyName("Reason")]
     public string Reason { get; set; } = "";
 }

@@ -4,9 +4,9 @@ namespace PayrollIntelligence.Core;
 
 public class AnomalyDetectionResult
 {
-    [JsonPropertyName("anomalies")]
+    [JsonPropertyName("Anomalies")]
     public List<Anomaly> Anomalies { get; set; } = new();
     
-    [JsonPropertyName("summary")]
+    [JsonPropertyName("Summary")]
     public string Summary { get; set; } = "";            // Overall summary of findings
 }

@@ -4,27 +4,27 @@ namespace PayrollIntelligence.Core;
 
 public class UnpaidLeavePayrollItem
 {
-    [JsonPropertyName("employeePayrollId")]
+    [JsonPropertyName("EmployeePayrollId")]
     public string? EmployeePayrollId { get; set; }
     
-    [JsonPropertyName("payrollItemTypeId")]
+    [JsonPropertyName("PayrollItemTypeId")]
     public string? PayrollItemTypeId { get; set; }
     
-    [JsonPropertyName("name")]
+    [JsonPropertyName("Name")]
     public string? Name { get; set; }
     
-    [JsonPropertyName("amount")]
+    [JsonPropertyName("Amount")]
     public decimal Amount { get; set; }
     
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")]
     public string? Id { get; set; }
     
-    [JsonPropertyName("createdAt")]
+    [JsonPropertyName("CreatedAt")]
     public DateTime? CreatedAt { get; set; }
     
-    [JsonPropertyName("updatedAt")]
+    [JsonPropertyName("UpdatedAt")]
     public DateTime? UpdatedAt { get; set; }
     
-    [JsonPropertyName("archivedAt")]
+    [JsonPropertyName("ArchivedAt")]
     public DateTime? ArchivedAt { get; set; }
 }

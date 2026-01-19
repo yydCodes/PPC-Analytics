@@ -4,42 +4,42 @@ namespace PayrollIntelligence.Core;
 
 public class PayrollData
 {
-    [JsonPropertyName("payrollId")]
+    [JsonPropertyName("PayrollId")]
     public string? PayrollId { get; set; }
     
-    [JsonPropertyName("name")]
+    [JsonPropertyName("Name")]
     public string? Name { get; set; }
     
-    [JsonPropertyName("status")]
+    [JsonPropertyName("Status")]
     public int Status { get; set; }
     
-    [JsonPropertyName("statutoryMonth")]
+    [JsonPropertyName("StatutoryMonth")]
     public string? StatutoryMonth { get; set; }
     
-    [JsonPropertyName("periodStartDate")]
+    [JsonPropertyName("PeriodStartDate")]
     public string? PeriodStartDate { get; set; }
     
-    [JsonPropertyName("periodEndDate")]
+    [JsonPropertyName("PeriodEndDate")]
     public string? PeriodEndDate { get; set; }
     
-    [JsonPropertyName("approvedDate")]
+    [JsonPropertyName("ApprovedDate")]
     public object? ApprovedDate { get; set; }
     
-    [JsonPropertyName("totals")]
+    [JsonPropertyName("Totals")]
     public PayrollTotals? Totals { get; set; }
     
-    [JsonPropertyName("employeePayrolls")]
+    [JsonPropertyName("EmployeePayrolls")]
     public List<EmployeePayroll>? EmployeePayrolls { get; set; }
     
-    [JsonPropertyName("integrationSettingsPayrollSyncInfos")]
+    [JsonPropertyName("IntegrationSettingsPayrollSyncInfos")]
     public List<object>? IntegrationSettingsPayrollSyncInfos { get; set; }
     
-    [JsonPropertyName("totalCount")]
+    [JsonPropertyName("TotalCount")]
     public int TotalCount { get; set; }
     
-    [JsonPropertyName("items")]
+    [JsonPropertyName("Items")]
     public List<EmployeePayroll>? Items { get; set; }
     
-    [JsonPropertyName("totalPages")]
+    [JsonPropertyName("TotalPages")]
     public int TotalPages { get; set; }
 }

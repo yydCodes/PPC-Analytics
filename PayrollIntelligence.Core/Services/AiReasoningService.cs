@@ -122,10 +122,10 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
 
             return result?.ChangeGroups?.Select(cg => new ChangeGroup
             {
-                group_title = cg.Title ?? "",
-                description = cg.Description ?? "",
-                affected_employees = cg.AffectedEmployees ?? new List<string>(),
-                why_it_matters = cg.WhyItMatters ?? ""
+                GroupTitle = cg.Title ?? "",
+                Description = cg.Description ?? "",
+                AffectedEmployees = cg.AffectedEmployees ?? new List<string>(),
+                WhyItMatters = cg.WhyItMatters ?? ""
             }).ToList();
         }
         catch
@@ -136,25 +136,25 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
 
     private class ChangeGroupsResponse
     {
-        [JsonPropertyName("change_groups")]
+        [JsonPropertyName("ChangeGroups")]
         public List<ChangeGroupItem>? ChangeGroups { get; set; }
     }
 
     private class ChangeGroupItem
     {
-        [JsonPropertyName("title")]
+        [JsonPropertyName("Title")]
         public string? Title { get; set; }
         
-        [JsonPropertyName("description")]
+        [JsonPropertyName("Description")]
         public string? Description { get; set; }
         
-        [JsonPropertyName("affected_employees")]
+        [JsonPropertyName("AffectedEmployees")]
         public List<string>? AffectedEmployees { get; set; }
         
-        [JsonPropertyName("why_it_matters")]
+        [JsonPropertyName("WhyItMatters")]
         public string? WhyItMatters { get; set; }
         
-        [JsonPropertyName("confidence_level")]
+        [JsonPropertyName("ConfidenceLevel")]
         public string? ConfidenceLevel { get; set; }
     }
 
@@ -192,16 +192,16 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
 
     public class PayrollComparisonAiResponse
     {
-        [JsonPropertyName("direction")]
+        [JsonPropertyName("Direction")]
         public string? Direction { get; set; }
 
-        [JsonPropertyName("summary")]
+        [JsonPropertyName("Summary")]
         public string? Summary { get; set; }
 
-        [JsonPropertyName("key_drivers")]
+        [JsonPropertyName("KeyDrivers")]
         public List<string>? KeyDrivers { get; set; }
 
-        [JsonPropertyName("confidence_level")]
+        [JsonPropertyName("ConfidenceLevel")]
         public string? ConfidenceLevel { get; set; }
     }
     
@@ -241,9 +241,39 @@ Provide a concise, actionable insight (2-3 sentences max). Focus on business imp
             return null; // Gracefully fallback to rule-based
         }
     }
+    public class AnomalyReviewResponse
+    {
+        [JsonPropertyName("ReviewItems")]
+        public List<AnomalyReviewItem>? ReviewItems { get; set; }
+
+        [JsonPropertyName("OverallAssessment")]
+        public string? OverallAssessment { get; set; }
+    }
+
+    public class AnomalyReviewItem
+    {
+        [JsonPropertyName("Severity")]
+        public string? Severity { get; set; }
+
+        [JsonPropertyName("Scope")]
+        public string? Scope { get; set; }
+
+        [JsonPropertyName("Reference")]
+        public string? Reference { get; set; }
+
+        [JsonPropertyName("Title")]
+        public string? Title { get; set; }
+
+        [JsonPropertyName("Explanation")]
+        public string? Explanation { get; set; }
+
+        [JsonPropertyName("ReviewSuggestion")]
+        public string? ReviewSuggestion { get; set; }
+    }
+
     private class OllamaResponse
     {
-        [JsonPropertyName("response")]
+        [JsonPropertyName("Response")]
         public string? Response { get; set; }
     }
 }

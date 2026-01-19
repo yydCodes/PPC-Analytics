@@ -5,12 +5,12 @@ namespace PayrollIntelligence.Core;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AnomalySeverity
 {
-    [JsonPropertyName("low")]
+    [JsonPropertyName("Low")]
     Low,
     
-    [JsonPropertyName("medium")]
+    [JsonPropertyName("Medium")]
     Medium,
     
-    [JsonPropertyName("high")]
+    [JsonPropertyName("High")]
     High
 }

@@ -4,9 +4,9 @@ namespace PayrollIntelligence.Core;
 
 public class LeavePayPayrollItem
 {
-    [JsonPropertyName("name")]
+    [JsonPropertyName("Name")]
     public string? Name { get; set; }
     
-    [JsonPropertyName("amount")]
+    [JsonPropertyName("Amount")]
     public decimal Amount { get; set; }
 }

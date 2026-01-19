@@ -5,24 +5,24 @@ namespace PayrollIntelligence.Core;
 // API response for GetPayrolls/:year endpoint
 public class PayrollYearItem
 {
-    [JsonPropertyName("payrollId")]
+    [JsonPropertyName("PayrollId")]
     public string? PayrollId { get; set; }
     
-    [JsonPropertyName("name")]
+    [JsonPropertyName("Name")]
     public string? Name { get; set; }
     
-    [JsonPropertyName("status")]
+    [JsonPropertyName("Status")]
     public int Status { get; set; }  // 1 = approved, 0 = not approved
     
-    [JsonPropertyName("employeesCount")]
+    [JsonPropertyName("EmployeesCount")]
     public int EmployeesCount { get; set; }
     
-    [JsonPropertyName("statutoryMonth")]
+    [JsonPropertyName("StatutoryMonth")]
     public string? StatutoryMonth { get; set; }
     
-    [JsonPropertyName("year")]
+    [JsonPropertyName("Year")]
     public int Year { get; set; }
     
-    [JsonPropertyName("month")]
+    [JsonPropertyName("Month")]
     public int Month { get; set; }
 }

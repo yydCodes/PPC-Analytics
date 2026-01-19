@@ -4,36 +4,36 @@ namespace PayrollIntelligence.Core;
 
 public class PayrollItem
 {
-    [JsonPropertyName("id")]
+    [JsonPropertyName("Id")]
     public string? Id { get; set; }
     
-    [JsonPropertyName("typeId")]
+    [JsonPropertyName("TypeId")]
     public string? TypeId { get; set; }
     
-    [JsonPropertyName("isDeduction")]
+    [JsonPropertyName("IsDeduction")]
     public bool IsDeduction { get; set; }
     
-    [JsonPropertyName("isRecurring")]
+    [JsonPropertyName("IsRecurring")]
     public bool IsRecurring { get; set; }
     
-    [JsonPropertyName("isUnpaidLeaveApplicable")]
+    [JsonPropertyName("IsUnpaidLeaveApplicable")]
     public bool IsUnpaidLeaveApplicable { get; set; }
     
-    [JsonPropertyName("isLeavePayApplicable")]
+    [JsonPropertyName("IsLeavePayApplicable")]
     public bool IsLeavePayApplicable { get; set; }
     
-    [JsonPropertyName("typeName")]
+    [JsonPropertyName("TypeName")]
     public string? TypeName { get; set; }
     
-    [JsonPropertyName("rate")]
+    [JsonPropertyName("Rate")]
     public decimal? Rate { get; set; }
     
-    [JsonPropertyName("units")]
+    [JsonPropertyName("Units")]
     public decimal? Units { get; set; }
     
-    [JsonPropertyName("amount")]
+    [JsonPropertyName("Amount")]
     public decimal? Amount { get; set; }  // Made nullable - JSON can have null
     
-    [JsonPropertyName("finalAmount")]
+    [JsonPropertyName("FinalAmount")]
     public decimal? FinalAmount { get; set; }
 }

@@ -5,9 +5,9 @@ namespace PayrollIntelligence.Core;
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum AnomalyScope
 {
-    [JsonPropertyName("employee")]
+    [JsonPropertyName("Employee")]
     Employee,
     
-    [JsonPropertyName("payroll")]
+    [JsonPropertyName("Payroll")]
     Payroll
 }
