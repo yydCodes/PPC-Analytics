@@ -37,7 +37,7 @@ WORKDIR /app
 
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:80
-ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_ENVIRONMENT=Development
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos '' appuser
