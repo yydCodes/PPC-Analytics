@@ -127,8 +127,8 @@ public class PayrollAnomalyServiceTests
         var result = PayrollAnomalyService.DetectAnomalies(previous, current);
 
         // Assert
-        Assert.NotNull(result.summary);
-        Assert.NotEmpty(result.summary);
+        Assert.NotNull(result.Summary);
+        Assert.NotEmpty(result.Summary);
     }
 
     [Fact]

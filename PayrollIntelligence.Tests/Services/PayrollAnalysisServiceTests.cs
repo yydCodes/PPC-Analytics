@@ -95,7 +95,7 @@ public class PayrollAnalysisServiceTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.Empty(result.anomalies);
-        Assert.Contains("No historical data", result.summary);
+        Assert.Empty(result.Anomalies);
+        Assert.Contains("No historical data", result.Summary);
     }
 }

@@ -19,31 +19,31 @@ public static class TestDataHelper
         {
             employees.Add(new EmployeePayroll
             {
-                employeeId = $"EMP{i:000}",
-                employeeName = $"Employee {i}",
-                employeeNumber = $"E{i:000}",
-                statutoryContribution = new StatutoryContribution
+                EmployeeId = $"EMP{i:000}",
+                EmployeeName = $"Employee {i}",
+                EmployeeNumber = $"E{i:000}",
+                StatutoryContribution = new StatutoryContribution
                 {
-                    gross = grossPay / employeeCount,
-                    net = netPay / employeeCount,
-                    employeeMtd = 500m,
-                    employerEpf = 1200m,
-                    employerSocso = 50m,
-                    employerEis = 20m
+                    Gross = grossPay / employeeCount,
+                    Net = netPay / employeeCount,
+                    EmployeeMtd = 500m,
+                    EmployerEpf = 1200m,
+                    EmployerSocso = 50m,
+                    EmployerEis = 20m
                 },
-                leavePayPayrollItem = new LeavePayPayrollItem { amount = 0 },
-                unpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>()
+                LeavePayPayrollItem = new LeavePayPayrollItem { Amount = 0 },
+                UnpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>()
             });
         }
 
         return new PayrollData
         {
-            employeePayrolls = employees,
-            totals = new PayrollTotals
+            EmployeePayrolls = employees,
+            Totals = new PayrollTotals
             {
-                gross = grossPay,
-                net = netPay,
-                cost = employerCost
+                Gross = grossPay,
+                Net = netPay,
+                Cost = employerCost
             }
         };
     }
@@ -53,12 +53,12 @@ public static class TestDataHelper
         var data = CreateSamplePayrollData(employeeCount);
         
         // Add leave adjustments to first employee
-        if (data.employeePayrolls?.Count > 0)
+        if (data.EmployeePayrolls?.Count > 0)
         {
-            data.employeePayrolls[0].leavePayPayrollItem = new LeavePayPayrollItem { amount = 500m };
-            data.employeePayrolls[0].unpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>
+            data.EmployeePayrolls[0].LeavePayPayrollItem = new LeavePayPayrollItem { Amount = 500m };
+            data.EmployeePayrolls[0].UnpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>
             {
-                new UnpaidLeavePayrollItem { amount = 200m }
+                new UnpaidLeavePayrollItem { Amount = 200m }
             };
         }
 
@@ -72,31 +72,31 @@ public static class TestDataHelper
         // Add new employees
         for (int i = 1; i <= newCount; i++)
         {
-            data.employeePayrolls?.Add(new EmployeePayroll
+            data.EmployeePayrolls?.Add(new EmployeePayroll
             {
-                employeeId = $"NEW{i:000}",
-                employeeName = $"New Employee {i}",
-                employeeNumber = $"N{i:000}",
-                statutoryContribution = new StatutoryContribution
+                EmployeeId = $"NEW{i:000}",
+                EmployeeName = $"New Employee {i}",
+                EmployeeNumber = $"N{i:000}",
+                StatutoryContribution = new StatutoryContribution
                 {
-                    gross = 5000m,
-                    net = 4000m,
-                    employeeMtd = 250m,
-                    employerEpf = 600m,
-                    employerSocso = 25m,
-                    employerEis = 10m
+                    Gross = 5000m,
+                    Net = 4000m,
+                    EmployeeMtd = 250m,
+                    EmployerEpf = 600m,
+                    EmployerSocso = 25m,
+                    EmployerEis = 10m
                 },
-                leavePayPayrollItem = new LeavePayPayrollItem { amount = 0 },
-                unpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>()
+                LeavePayPayrollItem = new LeavePayPayrollItem { Amount = 0 },
+                UnpaidLeavePayrollItems = new List<UnpaidLeavePayrollItem>()
             });
         }
 
         // Update totals
-        if (data.totals != null)
+        if (data.Totals != null)
         {
-            data.totals.gross += newCount * 5000m;
-            data.totals.net += newCount * 4000m;
-            data.totals.cost += newCount * 6000m;
+            data.Totals.Gross += newCount * 5000m;
+            data.Totals.Net += newCount * 4000m;
+            data.Totals.Cost += newCount * 6000m;
         }
 
         return data;
@@ -107,16 +107,16 @@ public static class TestDataHelper
         var data = CreateSamplePayrollData(2);
         
         // Set first employee to zero pay
-        if (data.employeePayrolls?.Count > 0)
+        if (data.EmployeePayrolls?.Count > 0)
         {
-            data.employeePayrolls[0].statutoryContribution = new StatutoryContribution
+            data.EmployeePayrolls[0].StatutoryContribution = new StatutoryContribution
             {
-                gross = 0m,
-                net = 0m,
-                employeeMtd = 0m,
-                employerEpf = 0m,
-                employerSocso = 0m,
-                employerEis = 0m
+                Gross = 0m,
+                Net = 0m,
+                EmployeeMtd = 0m,
+                EmployerEpf = 0m,
+                EmployerSocso = 0m,
+                EmployerEis = 0m
             };
         }
 
@@ -128,11 +128,11 @@ public static class TestDataHelper
         var data = CreateSamplePayrollData(2);
         
         // Add error to first employee
-        if (data.employeePayrolls?.Count > 0)
+        if (data.EmployeePayrolls?.Count > 0)
         {
-            data.employeePayrolls[0].error = new PayrollError
+            data.EmployeePayrolls[0].Error = new PayrollError
             {
-                message = "Error: Calculation warning detected"
+                Message = "Error: Calculation warning detected"
             };
         }
 
